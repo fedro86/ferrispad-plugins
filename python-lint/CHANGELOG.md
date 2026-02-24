@@ -5,6 +5,15 @@ All notable changes to the Python Lint plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-02-24
+
+### Added
+- Custom menu item: "Run Lint" (Ctrl+Shift+P) for on-demand linting
+- `on_menu_action` hook support for FerrisPad 0.9.1
+
+### Changed
+- Updated to use FerrisPad 0.9.1 plugin API with menu_items support
+
 ## [2.0.0] - 2025-02-24
 
 ### Added

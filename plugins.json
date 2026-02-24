@@ -1,16 +1,26 @@
 {
   "version": 1,
-  "updated": "2025-02-24",
+  "updated": "2026-02-24",
   "plugins": [
     {
       "name": "python-lint",
-      "version": "2.0.0",
-      "description": "Python linting with ruff and pyright, supports project venv detection",
+      "version": "2.1.0",
+      "description": "Python linting with ruff and pyright, supports project venv detection and custom menu shortcuts",
       "path": "python-lint/",
       "author": "FerrisPad Team",
       "license": "MIT",
       "tags": ["python", "linting", "ruff", "pyright"],
-      "min_ferrispad_version": "0.9.0"
+      "min_ferrispad_version": "0.9.1"
+    },
+    {
+      "name": "rust-lint",
+      "version": "1.0.0",
+      "description": "Rust linting with clippy and cargo build, individual toggles for each tool",
+      "path": "rust-lint/",
+      "author": "FerrisPad Team",
+      "license": "MIT",
+      "tags": ["rust", "linting", "clippy", "cargo"],
+      "min_ferrispad_version": "0.9.1"
     }
   ]
 }

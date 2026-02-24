@@ -1,7 +1,7 @@
--- Python Linter Plugin for FerrisPad v2.0.0
+-- Python Linter Plugin for FerrisPad v2.1.0
 local M = {
     name = "Python Lint",
-    version = "2.0.0",
+    version = "2.1.0",
     description = "Run ruff/pyright on Python files (supports project venv)"
 }
 
@@ -196,6 +196,14 @@ end
 
 function M.on_highlight_request(api, path, content)
     return M.on_document_lint(api, path, content)
+end
+
+-- Handle custom menu actions
+function M.on_menu_action(api, action, path, content)
+    if action == "lint" then
+        return M.on_document_lint(api, path, content)
+    end
+    return {}
 end
 
 return M

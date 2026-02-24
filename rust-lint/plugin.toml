@@ -1,0 +1,23 @@
+name = "Rust Lint"
+version = "1.0.0"
+description = "Run clippy and cargo build on Rust files"
+
+[permissions]
+execute = ["cargo"]
+
+[[menu_items]]
+label = "Run Clippy"
+action = "run_clippy"
+shortcut = "Ctrl+Shift+R"
+
+[[menu_items]]
+label = "Run Build"
+action = "run_build"
+
+[[menu_items]]
+label = "Toggle Clippy"
+action = "toggle_clippy"
+
+[[menu_items]]
+label = "Toggle Build"
+action = "toggle_build"
