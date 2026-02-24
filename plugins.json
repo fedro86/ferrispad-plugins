@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "updated": "2025-02-24",
+  "plugins": [
+    {
+      "name": "python-lint",
+      "version": "2.0.0",
+      "description": "Python linting with ruff and pyright, supports project venv detection",
+      "path": "python-lint/",
+      "author": "FerrisPad Team",
+      "license": "MIT",
+      "tags": ["python", "linting", "ruff", "pyright"],
+      "min_ferrispad_version": "0.9.0"
+    }
+  ]
+}
