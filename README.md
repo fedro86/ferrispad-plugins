@@ -39,7 +39,19 @@ Each plugin follows this structure:
 ```
 plugin-name/
 ├── init.lua      # Main plugin file (required)
+├── plugin.toml   # Plugin metadata and permissions (required)
 └── README.md     # Documentation (required)
+```
+
+### plugin.toml Format
+
+```toml
+name = "Plugin Name"
+version = "1.0.0"
+description = "Short description of the plugin"
+
+[permissions]
+execute = ["cmd1", "cmd2"]  # Commands the plugin can run
 ```
 
 ## Writing Plugins
@@ -54,7 +66,7 @@ See the [FerrisPad Plugin API Documentation](https://github.com/fedro86/ferrispa
 
 1. Fork this repository
 2. Create a new folder for your plugin
-3. Include `init.lua` and `README.md`
+3. Include `init.lua`, `plugin.toml`, and `README.md`
 4. Submit a pull request
 
 ## License
