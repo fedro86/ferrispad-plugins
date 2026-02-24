@@ -1,0 +1,62 @@
+# FerrisPad Official Plugins
+
+Official plugins for [FerrisPad](https://github.com/fedro86/ferrispad), a lightweight text editor written in Rust.
+
+## Available Plugins
+
+| Plugin | Description | Status |
+|--------|-------------|--------|
+| [python-lint](python-lint/) | Python linting with ruff and pyright | Stable |
+
+## Installation
+
+### Manual Installation
+
+Copy the desired plugin folder to your FerrisPad plugins directory:
+
+```bash
+# Linux/macOS
+cp -r <plugin-name> ~/.config/ferrispad/plugins/
+
+# Windows
+copy <plugin-name> %APPDATA%\ferrispad\plugins\
+```
+
+### From This Repository
+
+```bash
+# Clone the repository
+git clone https://github.com/fedro86/ferrispad-plugins.git
+
+# Copy desired plugins
+cp -r ferrispad-plugins/python-lint ~/.config/ferrispad/plugins/
+```
+
+## Plugin Structure
+
+Each plugin follows this structure:
+
+```
+plugin-name/
+├── init.lua      # Main plugin file (required)
+└── README.md     # Documentation (required)
+```
+
+## Writing Plugins
+
+See the [FerrisPad Plugin API Documentation](https://github.com/fedro86/ferrispad/blob/main/docs/temp/0.9.1/07_DIAGNOSTIC_PANEL_ENHANCEMENTS.md) for details on:
+
+- Available hooks (`on_document_open`, `on_document_save`, `on_document_lint`, etc.)
+- API functions (`api:run_command()`, `api:file_exists()`, etc.)
+- Diagnostic format and severity levels
+
+## Contributing
+
+1. Fork this repository
+2. Create a new folder for your plugin
+3. Include `init.lua` and `README.md`
+4. Submit a pull request
+
+## License
+
+MIT License - see individual plugin folders for specific licenses.

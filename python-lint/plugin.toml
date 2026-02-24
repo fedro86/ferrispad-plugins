@@ -1,0 +1,6 @@
+name = "Python Lint"
+version = "2.0.0"
+description = "Run ruff/pyright on Python files (supports project venv)"
+
+[permissions]
+execute = ["ruff", "pyright"]
