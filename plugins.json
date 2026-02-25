@@ -4,7 +4,7 @@
   "plugins": [
     {
       "name": "python-lint",
-      "version": "2.1.0",
+      "version": "2.2.0",
       "description": "Python linting with ruff and pyright, supports project venv detection and custom menu shortcuts",
       "path": "python-lint/",
       "author": "FerrisPad Team",

@@ -1,9 +1,13 @@
--- Python Linter Plugin for FerrisPad v2.1.0
+-- Python Linter Plugin for FerrisPad v2.2.0
 local M = {
     name = "Python Lint",
-    version = "2.1.0",
+    version = "2.2.0",
     description = "Run ruff/pyright on Python files (supports project venv)"
 }
+
+-- Plugin state (in-memory, resets on restart)
+local ruff_enabled = true
+local pyright_enabled = true
 
 -- Parse ruff JSON output
 local function parse_ruff_output(json_str, api)
@@ -147,6 +151,36 @@ local function find_command(api, cmd_name)
     return nil
 end
 
+-- Run ruff and collect diagnostics
+local function run_ruff(api, path)
+    local ruff_cmd = find_command(api, "ruff")
+    if not ruff_cmd then
+        return {}, false
+    end
+
+    api:log("Running ruff...")
+    local result = api:run_command(ruff_cmd, "check", "--output-format=json", path)
+    if result and result.stdout and #result.stdout > 2 then
+        return parse_ruff_output(result.stdout, api), true
+    end
+    return {}, true
+end
+
+-- Run pyright and collect diagnostics
+local function run_pyright(api, path)
+    local pyright_cmd = find_command(api, "pyright")
+    if not pyright_cmd then
+        return {}, false
+    end
+
+    api:log("Running pyright...")
+    local result = api:run_command(pyright_cmd, "--outputjson", path)
+    if result and result.stdout and #result.stdout > 2 then
+        return parse_pyright_output(result.stdout, api), true
+    end
+    return {}, true
+end
+
 -- Main lint function
 function M.on_document_lint(api, path, content)
     if api:get_file_extension() ~= "py" or not path then
@@ -154,32 +188,38 @@ function M.on_document_lint(api, path, content)
     end
 
     local all_diagnostics = {}
-    local ruff_cmd = find_command(api, "ruff")
-    local pyright_cmd = find_command(api, "pyright")
+    local ruff_available = false
+    local pyright_available = false
 
-    if ruff_cmd then
-        local result = api:run_command(ruff_cmd, "check", "--output-format=json", path)
-        if result and result.stdout and #result.stdout > 2 then
-            for _, d in ipairs(parse_ruff_output(result.stdout, api)) do
-                table.insert(all_diagnostics, d)
-            end
+    -- Run enabled tools
+    if ruff_enabled then
+        local diags, available = run_ruff(api, path)
+        ruff_available = available
+        for _, d in ipairs(diags) do
+            table.insert(all_diagnostics, d)
         end
     end
 
-    if pyright_cmd then
-        local result = api:run_command(pyright_cmd, "--outputjson", path)
-        if result and result.stdout and #result.stdout > 2 then
-            for _, d in ipairs(parse_pyright_output(result.stdout, api)) do
-                table.insert(all_diagnostics, d)
-            end
+    if pyright_enabled then
+        local diags, available = run_pyright(api, path)
+        pyright_available = available
+        for _, d in ipairs(diags) do
+            table.insert(all_diagnostics, d)
         end
     end
 
     api:log("Total: " .. #all_diagnostics .. " diagnostics")
 
-    if not ruff_cmd and not pyright_cmd then
+    -- Show status if no tools are enabled
+    if not ruff_enabled and not pyright_enabled then
         return { diagnostics = {}, highlights = {},
-            status_message = { level = "warning", text = "[Python Lint] No linters found" } }
+            status_message = { level = "warning", text = "[Python Lint] All checks disabled" } }
+    end
+
+    -- Show status if no tools are available
+    if not ruff_available and not pyright_available then
+        return { diagnostics = {}, highlights = {},
+            status_message = { level = "warning", text = "[Python Lint] No linters found. Install via: pip install ruff pyright" } }
     end
 
     local highlights = {}
@@ -202,7 +242,38 @@ end
 function M.on_menu_action(api, action, path, content)
     if action == "lint" then
         return M.on_document_lint(api, path, content)
+
+    elseif action == "run_ruff" then
+        if api:get_file_extension() ~= "py" then
+            return { status_message = { level = "warning", text = "Not a Python file" } }
+        end
+        local prev_pyright = pyright_enabled
+        pyright_enabled = false
+        local result = M.on_document_lint(api, path, content)
+        pyright_enabled = prev_pyright
+        return result
+
+    elseif action == "run_pyright" then
+        if api:get_file_extension() ~= "py" then
+            return { status_message = { level = "warning", text = "Not a Python file" } }
+        end
+        local prev_ruff = ruff_enabled
+        ruff_enabled = false
+        local result = M.on_document_lint(api, path, content)
+        ruff_enabled = prev_ruff
+        return result
+
+    elseif action == "toggle_ruff" then
+        ruff_enabled = not ruff_enabled
+        local state = ruff_enabled and "enabled" or "disabled"
+        return { status_message = { level = "info", text = "[Python Lint] Ruff " .. state } }
+
+    elseif action == "toggle_pyright" then
+        pyright_enabled = not pyright_enabled
+        local state = pyright_enabled and "enabled" or "disabled"
+        return { status_message = { level = "info", text = "[Python Lint] Pyright " .. state } }
     end
+
     return {}
 end
 

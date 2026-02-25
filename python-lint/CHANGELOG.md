@@ -5,6 +5,17 @@ All notable changes to the Python Lint plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-02-25
+
+### Added
+- Individual tool toggles: Toggle Ruff, Toggle Pyright menu items
+- Run specific tool: Run Ruff, Run Pyright menu items
+- Improved status messages when tools not found
+
+### Changed
+- Refactored to match rust-lint plugin architecture
+- Both tools enabled by default, can be toggled independently
+
 ## [2.1.0] - 2026-02-24
 
 ### Added
