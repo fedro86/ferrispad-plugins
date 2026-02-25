@@ -13,9 +13,9 @@
       "min_ferrispad_version": "0.9.1",
       "checksums": {
         "init.lua": "sha256:9979421e9c780be3f245ca1125792478327c903acac04bfd532d41d79d8f4ff7",
-        "plugin.toml": "sha256:5625837278f498622e8179dc52dfdbc25bafabf0515fe660de0d0f8ad41ffcb3"
+        "plugin.toml": "sha256:0db7034dc04ee97bcd6da5af5eedc31ce0b0b69a2a5d7d7acf0b0790f06e29eb"
       },
-      "signature": "r3PXUVjKrA3Pw0YZCLT5JN26waxjpxXQZLUXBKZdRUrgBFfnQmdX+gByE/7tGLa8VX/dAPIOGvyRLoUJHaRuDA=="
+      "signature": "Cj7sxVlVFkvpXb4HO5/f8Gk8Euh142tcTDo/4KCevORITP34hC22mHya4OzBRxhyP5agwaBoza5J58qkLeNFBQ=="
     },
     {
       "name": "rust-lint",
@@ -28,9 +28,9 @@
       "min_ferrispad_version": "0.9.1",
       "checksums": {
         "init.lua": "sha256:a477e2d1cce1750303a60505b90b47674f8e853b1887f478794221103204e9c0",
-        "plugin.toml": "sha256:5fbf5216dd31a1f70aa9c01cda38a44a11dd6b536b3df85799c6ad9216e56364"
+        "plugin.toml": "sha256:53236976e7610e552edf54442f7507578bbe00fe308e246fdf17a0bbaaa37506"
       },
-      "signature": "GzP2W8TPMir3H60hmixGkBD22bvAoHNk76rN5CBeKsVDNqeita4fr/3bFK+BLhU9y8+3tWFzBGrk+KIhwUDrAg=="
+      "signature": "+k6s5f2zfB0tVJowzPQpE/ZWE+Dp1HyWEJ+hspcUGHgmWPr7yM87ZqrwFbqQ93jYjcpyASJXK6t88a74XGZJBg=="
     }
   ]
 }

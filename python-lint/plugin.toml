@@ -48,6 +48,7 @@ label = "Extra Ruff Arguments"
 type = "string"
 default = ""
 placeholder = "--ignore=E501"
+validate = "cli_args"
 
 [[config.params]]
 key = "pyright_mode"
@@ -62,3 +63,4 @@ label = "Extra Pyright Arguments"
 type = "string"
 default = ""
 placeholder = "--pythonversion=3.11"
+validate = "cli_args"

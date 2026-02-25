@@ -90,6 +90,7 @@ default = "json"
 | `default` | Yes | Default value (always a string) |
 | `placeholder` | No | Hint text shown in empty input fields |
 | `options` | No | Required for `choice` type. Array of `"value"` or `"value|Label"` strings |
+| `validate` | No | Validation rule: `"cli_args"` or `"regex:PATTERN"` |
 
 ### Choice Type Options Format
 
@@ -109,6 +110,38 @@ default = "default"
 ```
 
 When the user selects "Warnings Only", the value `"warn"` is stored and returned by `api:get_config("lint_level")`.
+
+### Validation Rules
+
+Use the `validate` field to add input validation:
+
+#### `cli_args` - CLI Argument Validation
+
+Blocks shell metacharacters that could enable command injection:
+```toml
+[[config.params]]
+key = "extra_args"
+label = "Extra Arguments"
+type = "string"
+default = ""
+validate = "cli_args"
+```
+
+Blocked characters: `; & | $ \` ( ) { } < > \n \r \ " ' ! * ? [ ] # ~ ^`
+
+**Always use `validate = "cli_args"` for parameters that will be passed to command-line tools.**
+
+#### `regex:PATTERN` - Regex Validation
+
+Validates input against a regex pattern:
+```toml
+[[config.params]]
+key = "version"
+label = "Python Version"
+type = "string"
+default = "3.11"
+validate = "regex:^[0-9]+\\.[0-9]+$"
+```
 
 ### Reading Config Values in Lua
 

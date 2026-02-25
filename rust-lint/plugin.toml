@@ -37,6 +37,7 @@ label = "Extra Clippy Arguments"
 type = "string"
 default = ""
 placeholder = "-A clippy::too_many_arguments"
+validate = "cli_args"
 
 [[config.params]]
 key = "build_profile"
@@ -51,3 +52,4 @@ label = "Extra Build Arguments"
 type = "string"
 default = ""
 placeholder = "--features=full"
+validate = "cli_args"
