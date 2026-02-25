@@ -9,6 +9,7 @@ A linting plugin that integrates **ruff** and **pyright** for Python files.
 - Automatic venv detection (looks for `.venv/` or `venv/` in project)
 - Diagnostics displayed in the editor with inline highlights
 - Error/warning/info severity levels with color coding
+- **Dropdown Settings**: Easy configuration with preset options
 
 ## Requirements
 
@@ -88,21 +89,29 @@ Diagnostics are shown with:
 
 Access plugin settings via **Plugins > Python Lint > Settings...** in FerrisPad.
 
+### Dropdown Settings
+
+| Parameter | Options | Default |
+|-----------|---------|---------|
+| Ruff Rule Selection | Default, All Rules, E+W, E+W+F, Custom | Default |
+| Ruff Line Length | Default (88), 79 (PEP 8), 88 (Black), 100, 120, Custom | Default |
+| Pyright Type Checking Mode | Default, Off, Basic, Standard, Strict, All | Default |
+
+### Text Settings
+
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `ruff_args` | Extra command-line arguments for ruff | (empty) |
-| `pyright_args` | Extra command-line arguments for pyright | (empty) |
+| Extra Ruff Arguments | Additional CLI flags for ruff | (empty) |
+| Extra Pyright Arguments | Additional CLI flags for pyright | (empty) |
 
 ### Examples
 
-**ruff_args:**
-- `--select=E,W` - Only check specific error categories
+**Extra Ruff Arguments:**
 - `--ignore=E501` - Ignore specific rules
-- `--line-length=120` - Set max line length
+- `--fix` - Apply auto-fixes
 
-**pyright_args:**
+**Extra Pyright Arguments:**
 - `--pythonversion=3.11` - Specify Python version
-- `--typecheckingmode=basic` - Set type checking strictness
 
 Settings are saved in FerrisPad's configuration and persist across plugin updates.
 
@@ -124,5 +133,5 @@ Check FerrisPad logs for debug output:
 
 ## Version
 
-- Plugin version: 2.3.0
+- Plugin version: 2.4.0
 - Requires FerrisPad 0.9.1+

@@ -1,13 +1,42 @@
--- Python Linter Plugin for FerrisPad v2.3.0
+-- Python Linter Plugin for FerrisPad v2.4.0
 local M = {
     name = "Python Lint",
-    version = "2.3.0",
+    version = "2.4.0",
     description = "Run ruff/pyright on Python files (supports project venv)"
 }
 
 -- Plugin state (in-memory, resets on restart)
 local ruff_enabled = true
 local pyright_enabled = true
+
+-- Map ruff_select config to actual args
+local RUFF_SELECT_ARGS = {
+    default = {},
+    all = {"--select=ALL"},
+    ["E,W"] = {"--select=E,W"},
+    ["E,W,F"] = {"--select=E,W,F"},
+    custom = {}  -- User provides via extra args
+}
+
+-- Map ruff_line_length config to actual args
+local RUFF_LINE_LENGTH_ARGS = {
+    default = {},
+    ["79"] = {"--line-length=79"},
+    ["88"] = {"--line-length=88"},
+    ["100"] = {"--line-length=100"},
+    ["120"] = {"--line-length=120"},
+    custom = {}  -- User provides via extra args
+}
+
+-- Map pyright_mode config to actual args
+local PYRIGHT_MODE_ARGS = {
+    default = {},
+    off = {"--level=off"},
+    basic = {"--level=basic"},
+    standard = {"--level=standard"},
+    strict = {"--level=strict"},
+    all = {"--level=all"}
+}
 
 -- Parse ruff JSON output
 local function parse_ruff_output(json_str, api)
@@ -169,8 +198,22 @@ local function run_ruff(api, path)
 
     api:log("Running ruff...")
 
-    -- Build arguments: check --output-format=json <path> [extra_args...]
+    -- Build arguments: check --output-format=json <path> [select_args...] [line_length_args...] [extra_args...]
     local args = {"check", "--output-format=json", path}
+
+    -- Add rule selection args from config
+    local ruff_select = api:get_config("ruff_select") or "default"
+    local select_args = RUFF_SELECT_ARGS[ruff_select] or {}
+    for _, arg in ipairs(select_args) do
+        table.insert(args, arg)
+    end
+
+    -- Add line length args from config
+    local ruff_line_length = api:get_config("ruff_line_length") or "default"
+    local length_args = RUFF_LINE_LENGTH_ARGS[ruff_line_length] or {}
+    for _, arg in ipairs(length_args) do
+        table.insert(args, arg)
+    end
 
     -- Append extra arguments from config
     local extra_args = api:get_config("ruff_args") or ""
@@ -196,8 +239,18 @@ local function run_pyright(api, path)
 
     api:log("Running pyright...")
 
-    -- Build arguments: --outputjson <path> [extra_args...]
-    local args = {"--outputjson", path}
+    -- Build arguments: --outputjson [mode_args...] <path> [extra_args...]
+    local args = {"--outputjson"}
+
+    -- Add type checking mode args from config
+    local pyright_mode = api:get_config("pyright_mode") or "default"
+    local mode_args = PYRIGHT_MODE_ARGS[pyright_mode] or {}
+    for _, arg in ipairs(mode_args) do
+        table.insert(args, arg)
+    end
+
+    -- Add the path
+    table.insert(args, path)
 
     -- Append extra arguments from config
     local extra_args = api:get_config("pyright_args") or ""

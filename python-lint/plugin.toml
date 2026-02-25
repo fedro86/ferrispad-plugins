@@ -1,5 +1,5 @@
 name = "Python Lint"
-version = "2.3.0"
+version = "2.4.0"
 description = "Run ruff/pyright on Python files (supports project venv)"
 
 [permissions]
@@ -29,15 +29,36 @@ action = "toggle_pyright"
 # Configurable parameters (accessible via api:get_config())
 [config]
 [[config.params]]
+key = "ruff_select"
+label = "Ruff Rule Selection"
+type = "choice"
+options = ["default|Default Rules", "all|All Rules (--select=ALL)", "E,W|Errors & Warnings (E,W)", "E,W,F|Errors, Warnings & Pyflakes (E,W,F)", "custom|Custom (use Extra Args)"]
+default = "default"
+
+[[config.params]]
+key = "ruff_line_length"
+label = "Ruff Line Length"
+type = "choice"
+options = ["default|Default (88)", "79|79 (PEP 8)", "88|88 (Black)", "100|100", "120|120", "custom|Custom (use Extra Args)"]
+default = "default"
+
+[[config.params]]
 key = "ruff_args"
 label = "Extra Ruff Arguments"
 type = "string"
 default = ""
-placeholder = "--select=E,W"
+placeholder = "--ignore=E501"
+
+[[config.params]]
+key = "pyright_mode"
+label = "Pyright Type Checking Mode"
+type = "choice"
+options = ["default|Default", "off|Off", "basic|Basic", "standard|Standard", "strict|Strict", "all|All"]
+default = "default"
 
 [[config.params]]
 key = "pyright_args"
 label = "Extra Pyright Arguments"
 type = "string"
 default = ""
-placeholder = "--type-checking-mode=basic"
+placeholder = "--pythonversion=3.11"

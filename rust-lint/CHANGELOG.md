@@ -5,6 +5,16 @@ All notable changes to the Rust Lint plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-02-25
+
+### Added
+- `clippy_level` dropdown setting with options: Default, Pedantic, All Warnings, Nursery
+- `build_profile` dropdown setting: Debug or Release build
+- Improved settings dialog with dropdown choices for common options
+
+### Changed
+- Settings now use dropdown menus for better UX instead of requiring users to type CLI flags
+
 ## [1.1.0] - 2026-02-25
 
 ### Added

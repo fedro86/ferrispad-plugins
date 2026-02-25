@@ -73,15 +73,42 @@ key = "auto_fix"
 label = "Auto-fix on Save"
 type = "boolean"
 default = "false"
+
+[[config.params]]
+key = "output_format"
+label = "Output Format"
+type = "choice"
+options = ["json|JSON Format", "text|Plain Text", "markdown|Markdown"]
+default = "json"
 ```
 
 | Field | Required | Description |
 |-------|----------|-------------|
 | `key` | Yes | Identifier used in `api:get_config(key)` |
 | `label` | Yes | Display name shown in Settings dialog |
-| `type` | Yes | `"string"`, `"number"`, or `"boolean"` |
+| `type` | Yes | `"string"`, `"number"`, `"boolean"`, or `"choice"` |
 | `default` | Yes | Default value (always a string) |
 | `placeholder` | No | Hint text shown in empty input fields |
+| `options` | No | Required for `choice` type. Array of `"value"` or `"value|Label"` strings |
+
+### Choice Type Options Format
+
+For `choice` type parameters, options can be specified in two formats:
+
+1. **Simple**: `"value"` - The value is used as both the stored value and display label
+2. **With label**: `"value|Display Label"` - The value before `|` is stored, the label after `|` is shown in UI
+
+Example:
+```toml
+[[config.params]]
+key = "lint_level"
+label = "Lint Strictness"
+type = "choice"
+options = ["default|Default", "warn|Warnings Only", "strict|Strict Mode"]
+default = "default"
+```
+
+When the user selects "Warnings Only", the value `"warn"` is stored and returned by `api:get_config("lint_level")`.
 
 ### Reading Config Values in Lua
 

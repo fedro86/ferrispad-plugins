@@ -5,6 +5,17 @@ All notable changes to the Python Lint plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-02-25
+
+### Added
+- `ruff_select` dropdown setting with rule presets: Default, All, E+W, E+W+F, Custom
+- `ruff_line_length` dropdown setting: Default (88), 79 (PEP 8), 88 (Black), 100, 120, Custom
+- `pyright_mode` dropdown setting for type checking strictness: Default, Off, Basic, Standard, Strict, All
+- Improved settings dialog with dropdown choices for common options
+
+### Changed
+- Settings now use dropdown menus for better UX instead of requiring users to type CLI flags
+
 ## [2.3.0] - 2026-02-25
 
 ### Added

@@ -1,5 +1,5 @@
 name = "Rust Lint"
-version = "1.1.0"
+version = "1.2.0"
 description = "Run clippy and cargo build on Rust files"
 
 [permissions]
@@ -25,15 +25,29 @@ action = "toggle_build"
 # Configurable parameters (accessible via api:get_config())
 [config]
 [[config.params]]
+key = "clippy_level"
+label = "Clippy Warning Level"
+type = "choice"
+options = ["default|Default", "pedantic|Pedantic (-W clippy::pedantic)", "all|All Warnings (-W clippy::all)", "nursery|Nursery (-W clippy::nursery)"]
+default = "default"
+
+[[config.params]]
 key = "clippy_args"
 label = "Extra Clippy Arguments"
 type = "string"
 default = ""
-placeholder = "-W clippy::all"
+placeholder = "-A clippy::too_many_arguments"
+
+[[config.params]]
+key = "build_profile"
+label = "Build Profile"
+type = "choice"
+options = ["debug|Debug (default)", "release|Release (--release)"]
+default = "debug"
 
 [[config.params]]
 key = "build_args"
 label = "Extra Build Arguments"
 type = "string"
 default = ""
-placeholder = "--release"
+placeholder = "--features=full"

@@ -1,13 +1,21 @@
--- Rust Lint Plugin for FerrisPad v1.1.0
+-- Rust Lint Plugin for FerrisPad v1.2.0
 local M = {
     name = "Rust Lint",
-    version = "1.1.0",
+    version = "1.2.0",
     description = "Run clippy/cargo build on Rust files"
 }
 
 -- Plugin state (in-memory, resets on restart)
 local clippy_enabled = true
 local build_enabled = true
+
+-- Map clippy_level config to actual args
+local CLIPPY_LEVEL_ARGS = {
+    default = {},
+    pedantic = {"-W", "clippy::pedantic"},
+    all = {"-W", "clippy::all"},
+    nursery = {"-W", "clippy::nursery"}
+}
 
 -- Parse cargo's JSON diagnostic output
 -- Cargo outputs one JSON object per line with --message-format=json
@@ -109,8 +117,15 @@ end
 local function run_clippy(api, path)
     api:log("Running cargo clippy...")
 
-    -- Build arguments: clippy --message-format=json --quiet [extra_args...]
+    -- Build arguments: clippy --message-format=json --quiet [level_args...] [extra_args...]
     local args = {"clippy", "--message-format=json", "--quiet"}
+
+    -- Add clippy warning level args from config
+    local clippy_level = api:get_config("clippy_level") or "default"
+    local level_args = CLIPPY_LEVEL_ARGS[clippy_level] or {}
+    for _, arg in ipairs(level_args) do
+        table.insert(args, arg)
+    end
 
     -- Append extra arguments from config
     local extra_args = api:get_config("clippy_args") or ""
@@ -137,8 +152,14 @@ end
 local function run_build(api, path)
     api:log("Running cargo build...")
 
-    -- Build arguments: build --message-format=json --quiet [extra_args...]
+    -- Build arguments: build --message-format=json --quiet [--release] [extra_args...]
     local args = {"build", "--message-format=json", "--quiet"}
+
+    -- Add release flag if configured
+    local build_profile = api:get_config("build_profile") or "debug"
+    if build_profile == "release" then
+        table.insert(args, "--release")
+    end
 
     -- Append extra arguments from config
     local extra_args = api:get_config("build_args") or ""

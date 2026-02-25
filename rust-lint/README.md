@@ -8,6 +8,7 @@ Run `cargo clippy` and `cargo build` diagnostics directly in FerrisPad.
 - **Build Check**: Compilation error detection
 - **Individual Toggles**: Enable/disable each tool independently
 - **Documentation Links**: Double-click clippy warnings to open docs
+- **Dropdown Settings**: Easy configuration with preset options
 
 ## Requirements
 
@@ -51,20 +52,27 @@ Save any `.rs` file in a project with `Cargo.toml` - diagnostics appear automati
 
 Access plugin settings via **Plugins > Rust Lint > Settings...** in FerrisPad.
 
+### Dropdown Settings
+
+| Parameter | Options | Default |
+|-----------|---------|---------|
+| Clippy Warning Level | Default, Pedantic, All Warnings, Nursery | Default |
+| Build Profile | Debug, Release | Debug |
+
+### Text Settings
+
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `clippy_args` | Extra command-line arguments for clippy | (empty) |
-| `build_args` | Extra command-line arguments for cargo build | (empty) |
+| Extra Clippy Arguments | Additional CLI flags for clippy | (empty) |
+| Extra Build Arguments | Additional CLI flags for cargo build | (empty) |
 
 ### Examples
 
-**clippy_args:**
-- `-W clippy::all` - Enable all clippy warnings
-- `-A clippy::pedantic` - Allow pedantic lints
-- `-- -D warnings` - Deny all warnings
+**Extra Clippy Arguments:**
+- `-A clippy::too_many_arguments` - Allow specific lints
+- `--all-targets` - Check all targets
 
-**build_args:**
-- `--release` - Build in release mode
+**Extra Build Arguments:**
 - `--features=foo,bar` - Enable specific features
 - `--all-targets` - Build all targets
 
@@ -132,5 +140,5 @@ rustup component add clippy
 
 ## Version
 
-- Plugin version: 1.1.0
+- Plugin version: 1.2.0
 - Requires FerrisPad 0.9.1+
