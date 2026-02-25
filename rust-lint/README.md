@@ -42,10 +42,33 @@ Save any `.rs` file in a project with `Cargo.toml` - diagnostics appear automati
 - **Plugins > Rust Lint > Run Clippy** (Ctrl+Shift+R): Run clippy only
 - **Plugins > Rust Lint > Run Build**: Run cargo build only
 
-### Configuration
+### Toggle Tools
 
 - **Plugins > Rust Lint > Toggle Clippy**: Enable/disable clippy on save
 - **Plugins > Rust Lint > Toggle Build**: Enable/disable build check on save
+
+## Configuration
+
+Access plugin settings via **Plugins > Rust Lint > Settings...** in FerrisPad.
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `clippy_args` | Extra command-line arguments for clippy | (empty) |
+| `build_args` | Extra command-line arguments for cargo build | (empty) |
+
+### Examples
+
+**clippy_args:**
+- `-W clippy::all` - Enable all clippy warnings
+- `-A clippy::pedantic` - Allow pedantic lints
+- `-- -D warnings` - Deny all warnings
+
+**build_args:**
+- `--release` - Build in release mode
+- `--features=foo,bar` - Enable specific features
+- `--all-targets` - Build all targets
+
+Settings are saved in FerrisPad's configuration and persist across plugin updates.
 
 ## Diagnostic Display
 
@@ -109,5 +132,5 @@ rustup component add clippy
 
 ## Version
 
-- Plugin version: 1.0.0
+- Plugin version: 1.1.0
 - Requires FerrisPad 0.9.1+

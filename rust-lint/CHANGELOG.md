@@ -5,6 +5,16 @@ All notable changes to the Rust Lint plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-02-25
+
+### Added
+- Per-plugin configuration support via FerrisPad Settings dialog
+- `clippy_args` config parameter for extra clippy command-line arguments
+- `build_args` config parameter for extra cargo build command-line arguments
+
+### Changed
+- Updated to use FerrisPad 0.9.1 config API (`api:get_config()`)
+
 ## [1.0.0] - 2026-02-24
 
 ### Added

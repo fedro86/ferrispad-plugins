@@ -5,6 +5,7 @@ Thank you for your interest in contributing to FerrisPad's plugin ecosystem!
 ## Table of Contents
 
 - [Plugin Structure](#plugin-structure)
+- [Plugin Configuration](#plugin-configuration)
 - [UI Widgets Reference](#ui-widgets-reference)
 - [Linter Plugin Guidelines](#linter-plugin-guidelines)
 - [Diagnostic Format](#diagnostic-format)
@@ -41,6 +42,96 @@ label = "Run Tool"
 action = "run_tool"
 shortcut = "Ctrl+Shift+X"  # Optional
 ```
+
+---
+
+## Plugin Configuration
+
+Plugins can define configurable parameters that users can edit via `Plugins → {Plugin Name} → Settings...`. Configuration values are stored in FerrisPad's `settings.json` and persist across plugin updates.
+
+### Defining Config Parameters in plugin.toml
+
+Add a `[config]` section with `[[config.params]]` entries:
+
+```toml
+[config]
+[[config.params]]
+key = "extra_args"
+label = "Extra Arguments"
+type = "string"
+default = ""
+placeholder = "--verbose"
+
+[[config.params]]
+key = "max_line_length"
+label = "Max Line Length"
+type = "number"
+default = "88"
+
+[[config.params]]
+key = "auto_fix"
+label = "Auto-fix on Save"
+type = "boolean"
+default = "false"
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `key` | Yes | Identifier used in `api:get_config(key)` |
+| `label` | Yes | Display name shown in Settings dialog |
+| `type` | Yes | `"string"`, `"number"`, or `"boolean"` |
+| `default` | Yes | Default value (always a string) |
+| `placeholder` | No | Hint text shown in empty input fields |
+
+### Reading Config Values in Lua
+
+Use the `api:get_config()` family of methods:
+
+```lua
+-- Get string value (returns nil if not set)
+local args = api:get_config("extra_args") or ""
+
+-- Get number value (returns nil if not a valid number)
+local max_len = api:get_config_number("max_line_length") or 88
+
+-- Get boolean value (returns false if not set or not "true")
+local auto_fix = api:get_config_bool("auto_fix")
+```
+
+### Example: Using Config in a Linter
+
+```lua
+local function run_tool(api, path)
+    local args = {"check", path}
+
+    -- Append extra arguments from config
+    local extra_args = api:get_config("extra_args") or ""
+    if extra_args ~= "" then
+        for arg in extra_args:gmatch("%S+") do
+            table.insert(args, arg)
+        end
+    end
+
+    local result = api:run_command("tool", table.unpack(args))
+    -- ...
+end
+```
+
+### User Experience
+
+1. Users access config via `Plugins → {Plugin} → Settings...`
+2. A dialog appears with:
+   - **Shortcut** field (to override the default keyboard shortcut)
+   - Dynamic fields based on `[[config.params]]` definitions
+3. Values are saved to `~/.config/ferrispad/settings.json`
+4. Config persists across FerrisPad restarts and plugin updates
+
+### Best Practices
+
+- **Use sensible defaults**: The plugin should work without any configuration
+- **Document parameters**: Explain what each parameter does in your README
+- **Validate at runtime**: Handle invalid config values gracefully
+- **Keep it simple**: Only expose parameters that users actually need to change
 
 ---
 
@@ -598,15 +689,17 @@ The verification system is informational, not restrictive.
 Before submitting a pull request:
 
 - [ ] `init.lua` - Main plugin logic
-- [ ] `plugin.toml` - Metadata with permissions and menu items
-- [ ] `README.md` - Installation and usage instructions
+- [ ] `plugin.toml` - Metadata with permissions, menu items, and config params
+- [ ] `README.md` - Installation and usage instructions (including config options)
 - [ ] `CHANGELOG.md` - Version history
 - [ ] Tool detection with helpful error messages
 - [ ] Project/environment detection appropriate for the language
 - [ ] JSON output parsing
 - [ ] Individual tool toggles
 - [ ] Documentation URLs (if available)
+- [ ] Configurable parameters (if applicable) with sensible defaults
 - [ ] Tested all menu actions
+- [ ] Tested configuration via Settings dialog
 - [ ] Updated `plugins.json` registry
 - [ ] Updated main `README.md` available plugins table
 

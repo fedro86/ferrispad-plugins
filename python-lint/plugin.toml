@@ -1,5 +1,5 @@
 name = "Python Lint"
-version = "2.2.0"
+version = "2.3.0"
 description = "Run ruff/pyright on Python files (supports project venv)"
 
 [permissions]
@@ -25,3 +25,19 @@ action = "toggle_ruff"
 [[menu_items]]
 label = "Toggle Pyright"
 action = "toggle_pyright"
+
+# Configurable parameters (accessible via api:get_config())
+[config]
+[[config.params]]
+key = "ruff_args"
+label = "Extra Ruff Arguments"
+type = "string"
+default = ""
+placeholder = "--select=E,W"
+
+[[config.params]]
+key = "pyright_args"
+label = "Extra Pyright Arguments"
+type = "string"
+default = ""
+placeholder = "--type-checking-mode=basic"

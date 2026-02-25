@@ -1,7 +1,7 @@
--- Python Linter Plugin for FerrisPad v2.2.0
+-- Python Linter Plugin for FerrisPad v2.3.0
 local M = {
     name = "Python Lint",
-    version = "2.2.0",
+    version = "2.3.0",
     description = "Run ruff/pyright on Python files (supports project venv)"
 }
 
@@ -151,6 +151,15 @@ local function find_command(api, cmd_name)
     return nil
 end
 
+-- Split a string by spaces (for extra args)
+local function split_args(str)
+    local args = {}
+    for arg in str:gmatch("%S+") do
+        table.insert(args, arg)
+    end
+    return args
+end
+
 -- Run ruff and collect diagnostics
 local function run_ruff(api, path)
     local ruff_cmd = find_command(api, "ruff")
@@ -159,7 +168,19 @@ local function run_ruff(api, path)
     end
 
     api:log("Running ruff...")
-    local result = api:run_command(ruff_cmd, "check", "--output-format=json", path)
+
+    -- Build arguments: check --output-format=json <path> [extra_args...]
+    local args = {"check", "--output-format=json", path}
+
+    -- Append extra arguments from config
+    local extra_args = api:get_config("ruff_args") or ""
+    if extra_args ~= "" then
+        for _, arg in ipairs(split_args(extra_args)) do
+            table.insert(args, arg)
+        end
+    end
+
+    local result = api:run_command(ruff_cmd, table.unpack(args))
     if result and result.stdout and #result.stdout > 2 then
         return parse_ruff_output(result.stdout, api), true
     end
@@ -174,7 +195,19 @@ local function run_pyright(api, path)
     end
 
     api:log("Running pyright...")
-    local result = api:run_command(pyright_cmd, "--outputjson", path)
+
+    -- Build arguments: --outputjson <path> [extra_args...]
+    local args = {"--outputjson", path}
+
+    -- Append extra arguments from config
+    local extra_args = api:get_config("pyright_args") or ""
+    if extra_args ~= "" then
+        for _, arg in ipairs(split_args(extra_args)) do
+            table.insert(args, arg)
+        end
+    end
+
+    local result = api:run_command(pyright_cmd, table.unpack(args))
     if result and result.stdout and #result.stdout > 2 then
         return parse_pyright_output(result.stdout, api), true
     end

@@ -84,6 +84,28 @@ Diagnostics are shown with:
 - **Message** with error code prefix
 - **Inline highlights** in the editor (red for errors, yellow for warnings)
 
+## Configuration
+
+Access plugin settings via **Plugins > Python Lint > Settings...** in FerrisPad.
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `ruff_args` | Extra command-line arguments for ruff | (empty) |
+| `pyright_args` | Extra command-line arguments for pyright | (empty) |
+
+### Examples
+
+**ruff_args:**
+- `--select=E,W` - Only check specific error categories
+- `--ignore=E501` - Ignore specific rules
+- `--line-length=120` - Set max line length
+
+**pyright_args:**
+- `--pythonversion=3.11` - Specify Python version
+- `--typecheckingmode=basic` - Set type checking strictness
+
+Settings are saved in FerrisPad's configuration and persist across plugin updates.
+
 ## Troubleshooting
 
 ### No Linters Found
@@ -102,5 +124,5 @@ Check FerrisPad logs for debug output:
 
 ## Version
 
-- Plugin version: 2.0.0
-- Requires FerrisPad 0.9.0+
+- Plugin version: 2.3.0
+- Requires FerrisPad 0.9.1+

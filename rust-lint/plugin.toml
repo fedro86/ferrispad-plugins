@@ -1,5 +1,5 @@
 name = "Rust Lint"
-version = "1.0.0"
+version = "1.1.0"
 description = "Run clippy and cargo build on Rust files"
 
 [permissions]
@@ -21,3 +21,19 @@ action = "toggle_clippy"
 [[menu_items]]
 label = "Toggle Build"
 action = "toggle_build"
+
+# Configurable parameters (accessible via api:get_config())
+[config]
+[[config.params]]
+key = "clippy_args"
+label = "Extra Clippy Arguments"
+type = "string"
+default = ""
+placeholder = "-W clippy::all"
+
+[[config.params]]
+key = "build_args"
+label = "Extra Build Arguments"
+type = "string"
+default = ""
+placeholder = "--release"

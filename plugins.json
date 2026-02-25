@@ -4,33 +4,33 @@
   "plugins": [
     {
       "name": "python-lint",
-      "version": "2.2.0",
-      "description": "Python linting with ruff and pyright, supports project venv detection and custom menu shortcuts",
+      "version": "2.3.0",
+      "description": "Python linting with ruff and pyright, supports project venv detection, custom shortcuts, and configurable tool arguments",
       "path": "python-lint/",
       "author": "Federico Conticello",
       "license": "MIT",
       "tags": ["python", "linting", "ruff", "pyright"],
       "min_ferrispad_version": "0.9.1",
       "checksums": {
-        "init.lua": "sha256:101c1fe1bc1bfa80ede568c4e54c1762c6ad2e24d0611debd50234bbe54ac545",
-        "plugin.toml": "sha256:6e2b81c16e998b3cb4da9d13244c53fed0ff3ffcddfd93273635c5da3c69777a"
+        "init.lua": "sha256:11b43a85f93230a9e51212005ed8a682c18cb3b16c5bccabcd4991282e99dbef",
+        "plugin.toml": "sha256:d7b7555ee59c3d4d6a4dcda28ce9fc231e9f0621ac80dd4326651fbc31b58a6a"
       },
-      "signature": "pkpV1RkkImGX6s/mnwgpWI4PqX7RlMRNYAFEuth/DtzCyOYU0covMINg5F7DZlZJuw1znMPFliRUdHdvckWdBw=="
+      "signature": "/f/qGPaIx5xZA2R9srfBAeJ/a4yE3BzvkoOOSz2MUsMBym4qFetNJnAZysCuoR+RVgpdr6adWZu6WD6o21rHDQ=="
     },
     {
       "name": "rust-lint",
-      "version": "1.0.0",
-      "description": "Rust linting with clippy and cargo build, individual toggles for each tool",
+      "version": "1.1.0",
+      "description": "Rust linting with clippy and cargo build, individual toggles for each tool, and configurable arguments",
       "path": "rust-lint/",
       "author": "Federico Conticello",
       "license": "MIT",
       "tags": ["rust", "linting", "clippy", "cargo"],
       "min_ferrispad_version": "0.9.1",
       "checksums": {
-        "init.lua": "sha256:29fea0ee2f27ffba54bcbf901729a2ab8f27fce7c4e82a5a6aa874e5d6486ee4",
-        "plugin.toml": "sha256:d124f19a5f3cf1ea8e96bea539243ffcbbe8ccc3ab45035a0b13fe992c0b5506"
+        "init.lua": "sha256:2f916f5fc3d0f57b3c5522c3dd4864bc633a1ed17d4018027e7d3030744a8c3c",
+        "plugin.toml": "sha256:2fcb7b8fba052ea18d73c117ec8bbe7a2edd8204a91cdb1309cd2b5194f380f7"
       },
-      "signature": "iyrbo97oqzSY3vA2GEav+Z7qTSa96bbIRZiwvoWVEys56y4n96Q1dEiVVWn+X2bko+z8gBgf/G6jKEmRtB3KCg=="
+      "signature": "llvbVBkw7j53deEiYJq1M1HNA29NkM5YHoCmMkMzxEC6g2o+1caLBsJFnINGMEF1qT383SOZHuIDXSDVGnM2DA=="
     }
   ]
 }

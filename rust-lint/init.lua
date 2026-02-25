@@ -1,7 +1,7 @@
--- Rust Lint Plugin for FerrisPad v1.0.0
+-- Rust Lint Plugin for FerrisPad v1.1.0
 local M = {
     name = "Rust Lint",
-    version = "1.0.0",
+    version = "1.1.0",
     description = "Run clippy/cargo build on Rust files"
 }
 
@@ -96,10 +96,31 @@ local function is_rust_project(api)
     return false
 end
 
+-- Split a string by spaces (for extra args)
+local function split_args(str)
+    local args = {}
+    for arg in str:gmatch("%S+") do
+        table.insert(args, arg)
+    end
+    return args
+end
+
 -- Run clippy and collect diagnostics
 local function run_clippy(api, path)
     api:log("Running cargo clippy...")
-    local result = api:run_command("cargo", "clippy", "--message-format=json", "--quiet")
+
+    -- Build arguments: clippy --message-format=json --quiet [extra_args...]
+    local args = {"clippy", "--message-format=json", "--quiet"}
+
+    -- Append extra arguments from config
+    local extra_args = api:get_config("clippy_args") or ""
+    if extra_args ~= "" then
+        for _, arg in ipairs(split_args(extra_args)) do
+            table.insert(args, arg)
+        end
+    end
+
+    local result = api:run_command("cargo", table.unpack(args))
 
     if result and result.stdout then
         return parse_cargo_output(result.stdout, api, "[clippy] ")
@@ -115,7 +136,19 @@ end
 -- Run cargo build and collect diagnostics
 local function run_build(api, path)
     api:log("Running cargo build...")
-    local result = api:run_command("cargo", "build", "--message-format=json", "--quiet")
+
+    -- Build arguments: build --message-format=json --quiet [extra_args...]
+    local args = {"build", "--message-format=json", "--quiet"}
+
+    -- Append extra arguments from config
+    local extra_args = api:get_config("build_args") or ""
+    if extra_args ~= "" then
+        for _, arg in ipairs(split_args(extra_args)) do
+            table.insert(args, arg)
+        end
+    end
+
+    local result = api:run_command("cargo", table.unpack(args))
 
     if result and result.stdout then
         return parse_cargo_output(result.stdout, api, "[build] ")
