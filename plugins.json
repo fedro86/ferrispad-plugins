@@ -12,10 +12,10 @@
       "tags": ["python", "linting", "ruff", "pyright"],
       "min_ferrispad_version": "0.9.1",
       "checksums": {
-        "init.lua": "sha256:30ed45807df06b0028352d08e267ed4aab10faa52a9725df679441dd13f44b6d",
-        "plugin.toml": "sha256:3e147808fc33e9a1192a4c566a9fe75c7b1b1123fd99bd4c35912634aae3a61a"
+        "init.lua": "sha256:58c6f1ca8bddb18f4cabf23da0faf0b3167299966947d51188bec3e6c85b387a",
+        "plugin.toml": "sha256:762a805d33dc89361c9d333103030b6891b2943e870f5d35a17dbea981deb04f"
       },
-      "signature": "4omfR6C5K0BqabGIU2K6CpTbieLmWX9DfqiwFAOdDlruRM8wzQTqbM33RmvAoZ+rlIV5/u1G+hO1w2Q+KrGXDg==",
+      "signature": "6ClcYAJ6xisjm799Vs10ErejpSoa7rmngyfMDBZmRXN8+x2BG3aE61icMYUOodQZmnFtgR3xnbkLRyroHfcECA==",
       "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/python-lint/README.md"
     },
     {
@@ -28,10 +28,10 @@
       "tags": ["rust", "linting", "clippy", "cargo"],
       "min_ferrispad_version": "0.9.1",
       "checksums": {
-        "init.lua": "sha256:6fd6878eef7ffed472fbb4e2376ce009dd9a844ce85a62a654454e6e1f1a2ade",
-        "plugin.toml": "sha256:f9530659e0ebc7312ded875217cc2bb76bc29cb180227f051f376dd73e6015e4"
+        "init.lua": "sha256:fbf6cb3ddb937e934d5d7d270f4296c5b82ddf803d7de45c15e169bf851a333e",
+        "plugin.toml": "sha256:ec366057dddfb1510ba47064d02eb4ebcbd1352d0fa60e0f7e03c6faa4f4b5bc"
       },
-      "signature": "LGDgkSDuBsQHm33G8NqOzH1IaRgBOUOWcDoP9WOs16So+WjGngMZXWlBOEHjzbVou6EpDcAaSceH939zFaPqBQ==",
+      "signature": "UZYGITfH8bay+q+uvICiX1EXmriWOzzSq9YPg7bXG8u7Q8rbvDMgMZTzFv0C6MzIzZ/AYk6VxKxiJOOUMLFUDg==",
       "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/rust-lint/README.md"
     }
   ]
