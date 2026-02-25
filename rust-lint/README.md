@@ -38,19 +38,30 @@ cp -r rust-lint ~/.config/ferrispad/plugins/
 
 Save any `.rs` file in a project with `Cargo.toml` - diagnostics appear automatically.
 
-### Manual
+### Menu Actions
 
-- **Plugins > Rust Lint > Run Clippy** (Ctrl+Shift+R): Run clippy only
-- **Plugins > Rust Lint > Run Build**: Run cargo build only
-
-### Toggle Tools
-
-- **Plugins > Rust Lint > Toggle Clippy**: Enable/disable clippy on save
-- **Plugins > Rust Lint > Toggle Build**: Enable/disable build check on save
+- **Plugins > Rust Lint > Run All Checks** (Ctrl+Shift+R): Run all enabled tools
+- **Plugins > Rust Lint > Run Clippy Only**: Run clippy regardless of config
+- **Plugins > Rust Lint > Run Build Only**: Run cargo build regardless of config
+- **Plugins > Rust Lint > Settings...**: Configure plugin options
 
 ## Configuration
 
 Access plugin settings via **Plugins > Rust Lint > Settings...** in FerrisPad.
+
+### Tool Toggles
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| Run Clippy | Enable/disable clippy when running "Run All Checks" | Enabled |
+| Run Cargo Build | Enable/disable cargo build when running "Run All Checks" | Enabled |
+
+### Optional Shortcuts
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| Clippy Shortcut | Keyboard shortcut for "Run Clippy Only" | (none) |
+| Build Shortcut | Keyboard shortcut for "Run Build Only" | (none) |
 
 ### Dropdown Settings
 
@@ -140,5 +151,5 @@ rustup component add clippy
 
 ## Version
 
-- Plugin version: 1.2.0
+- Plugin version: 1.3.0
 - Requires FerrisPad 0.9.1+

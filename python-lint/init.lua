@@ -1,13 +1,20 @@
--- Python Linter Plugin for FerrisPad v2.4.0
+-- Python Linter Plugin for FerrisPad v2.5.0
 local M = {
     name = "Python Lint",
-    version = "2.4.0",
+    version = "2.5.0",
     description = "Run ruff/pyright on Python files (supports project venv)"
 }
 
--- Plugin state (in-memory, resets on restart)
-local ruff_enabled = true
-local pyright_enabled = true
+-- Helper to read boolean config (persisted across sessions)
+local function is_ruff_enabled(api)
+    local val = api:get_config("ruff_enabled")
+    return val == nil or val == "true" or val == true
+end
+
+local function is_pyright_enabled(api)
+    local val = api:get_config("pyright_enabled")
+    return val == nil or val == "true" or val == true
+end
 
 -- Map ruff_select config to actual args
 local RUFF_SELECT_ARGS = {
@@ -277,6 +284,10 @@ function M.on_document_lint(api, path, content)
     local ruff_available = false
     local pyright_available = false
 
+    -- Read enabled state from persistent config
+    local ruff_enabled = is_ruff_enabled(api)
+    local pyright_enabled = is_pyright_enabled(api)
+
     -- Run enabled tools
     if ruff_enabled then
         local diags, available = run_ruff(api, path)
@@ -324,40 +335,69 @@ function M.on_highlight_request(api, path, content)
     return M.on_document_lint(api, path, content)
 end
 
+-- Run only ruff (ignoring config for pyright_enabled)
+local function run_ruff_only(api, path, content)
+    if api:get_file_extension() ~= "py" or not path then
+        return { diagnostics = {}, highlights = {} }
+    end
+
+    local diags, available = run_ruff(api, path)
+    if not available then
+        return { diagnostics = {}, highlights = {},
+            status_message = { level = "warning", text = "[Python Lint] ruff not found. Install via: pip install ruff" } }
+    end
+
+    local highlights = {}
+    for _, d in ipairs(diags) do
+        local color = d.level == "error" and "error" or (d.level == "warning" and "warning" or "info")
+        table.insert(highlights, {
+            line = d.line,
+            inline = {{ start_col = d.column or 1, end_col = nil, color = color }}
+        })
+    end
+    return { diagnostics = diags, highlights = highlights }
+end
+
+-- Run only pyright (ignoring config for ruff_enabled)
+local function run_pyright_only(api, path, content)
+    if api:get_file_extension() ~= "py" or not path then
+        return { diagnostics = {}, highlights = {} }
+    end
+
+    local diags, available = run_pyright(api, path)
+    if not available then
+        return { diagnostics = {}, highlights = {},
+            status_message = { level = "warning", text = "[Python Lint] pyright not found. Install via: pip install pyright" } }
+    end
+
+    local highlights = {}
+    for _, d in ipairs(diags) do
+        local color = d.level == "error" and "error" or (d.level == "warning" and "warning" or "info")
+        table.insert(highlights, {
+            line = d.line,
+            inline = {{ start_col = d.column or 1, end_col = nil, color = color }}
+        })
+    end
+    return { diagnostics = diags, highlights = highlights }
+end
+
 -- Handle custom menu actions
 function M.on_menu_action(api, action, path, content)
     if action == "lint" then
+        -- Run all enabled checks (respects config toggles)
         return M.on_document_lint(api, path, content)
 
     elseif action == "run_ruff" then
         if api:get_file_extension() ~= "py" then
             return { status_message = { level = "warning", text = "Not a Python file" } }
         end
-        local prev_pyright = pyright_enabled
-        pyright_enabled = false
-        local result = M.on_document_lint(api, path, content)
-        pyright_enabled = prev_pyright
-        return result
+        return run_ruff_only(api, path, content)
 
     elseif action == "run_pyright" then
         if api:get_file_extension() ~= "py" then
             return { status_message = { level = "warning", text = "Not a Python file" } }
         end
-        local prev_ruff = ruff_enabled
-        ruff_enabled = false
-        local result = M.on_document_lint(api, path, content)
-        ruff_enabled = prev_ruff
-        return result
-
-    elseif action == "toggle_ruff" then
-        ruff_enabled = not ruff_enabled
-        local state = ruff_enabled and "enabled" or "disabled"
-        return { status_message = { level = "info", text = "[Python Lint] Ruff " .. state } }
-
-    elseif action == "toggle_pyright" then
-        pyright_enabled = not pyright_enabled
-        local state = pyright_enabled and "enabled" or "disabled"
-        return { status_message = { level = "info", text = "[Python Lint] Pyright " .. state } }
+        return run_pyright_only(api, path, content)
     end
 
     return {}

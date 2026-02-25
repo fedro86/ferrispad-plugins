@@ -85,9 +85,30 @@ Diagnostics are shown with:
 - **Message** with error code prefix
 - **Inline highlights** in the editor (red for errors, yellow for warnings)
 
+## Menu Actions
+
+- **Plugins > Python Lint > Run Lint** (Ctrl+Shift+P): Run all enabled linters
+- **Plugins > Python Lint > Run Ruff Only**: Run ruff regardless of config
+- **Plugins > Python Lint > Run Pyright Only**: Run pyright regardless of config
+- **Plugins > Python Lint > Settings...**: Configure plugin options
+
 ## Configuration
 
 Access plugin settings via **Plugins > Python Lint > Settings...** in FerrisPad.
+
+### Tool Toggles
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| Run Ruff | Enable/disable ruff when running "Run Lint" | Enabled |
+| Run Pyright | Enable/disable pyright when running "Run Lint" | Enabled |
+
+### Optional Shortcuts
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| Ruff Shortcut | Keyboard shortcut for "Run Ruff Only" | (none) |
+| Pyright Shortcut | Keyboard shortcut for "Run Pyright Only" | (none) |
 
 ### Dropdown Settings
 
@@ -133,5 +154,5 @@ Check FerrisPad logs for debug output:
 
 ## Version
 
-- Plugin version: 2.4.0
+- Plugin version: 2.5.0
 - Requires FerrisPad 0.9.1+

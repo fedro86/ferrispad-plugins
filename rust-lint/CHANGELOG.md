@@ -5,6 +5,19 @@ All notable changes to the Rust Lint plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-02-26
+
+### Added
+- `clippy_enabled` and `build_enabled` config toggles to enable/disable individual tools
+- `clippy_shortcut` and `build_shortcut` config for optional per-tool keyboard shortcuts
+- "Run Clippy Only" and "Run Build Only" menu items that bypass config toggles
+- "Run All Checks" menu item that runs all enabled tools
+
+### Changed
+- Replaced in-memory toggle state with persistent config-based toggles
+- "Run All Checks" now respects `clippy_enabled` and `build_enabled` config settings
+- Removed Toggle menu items (replaced by config settings)
+
 ## [1.2.0] - 2026-02-25
 
 ### Added

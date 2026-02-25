@@ -5,6 +5,18 @@ All notable changes to the Python Lint plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-02-26
+
+### Added
+- `ruff_enabled` and `pyright_enabled` config toggles to enable/disable individual tools
+- `ruff_shortcut` and `pyright_shortcut` config for optional per-tool keyboard shortcuts
+- "Run Ruff Only" and "Run Pyright Only" menu items that bypass config toggles
+
+### Changed
+- Replaced in-memory toggle state with persistent config-based toggles
+- "Run Lint" now respects `ruff_enabled` and `pyright_enabled` config settings
+- Removed Toggle menu items (replaced by config settings)
+
 ## [2.4.0] - 2026-02-25
 
 ### Added

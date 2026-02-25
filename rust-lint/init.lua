@@ -1,13 +1,20 @@
--- Rust Lint Plugin for FerrisPad v1.2.0
+-- Rust Lint Plugin for FerrisPad v1.3.0
 local M = {
     name = "Rust Lint",
-    version = "1.2.0",
+    version = "1.3.0",
     description = "Run clippy/cargo build on Rust files"
 }
 
--- Plugin state (in-memory, resets on restart)
-local clippy_enabled = true
-local build_enabled = true
+-- Helper to read boolean config (persisted across sessions)
+local function is_clippy_enabled(api)
+    local val = api:get_config("clippy_enabled")
+    return val == nil or val == "true" or val == true
+end
+
+local function is_build_enabled(api)
+    local val = api:get_config("build_enabled")
+    return val == nil or val == "true" or val == true
+end
 
 -- Map clippy_level config to actual args
 local CLIPPY_LEVEL_ARGS = {
@@ -201,6 +208,10 @@ function M.on_document_lint(api, path, content)
 
     local all_diagnostics = {}
 
+    -- Read enabled state from persistent config
+    local clippy_enabled = is_clippy_enabled(api)
+    local build_enabled = is_build_enabled(api)
+
     -- Run enabled tools
     if clippy_enabled then
         local diags = run_clippy(api, path)
@@ -241,37 +252,79 @@ function M.on_highlight_request(api, path, content)
     return M.on_document_lint(api, path, content)
 end
 
+-- Run only clippy (ignoring config for build_enabled)
+local function run_clippy_only(api, path, content)
+    if api:get_file_extension() ~= "rs" or not path then
+        return { diagnostics = {}, highlights = {} }
+    end
+
+    if not api:command_exists("cargo") then
+        return { diagnostics = {}, highlights = {},
+            status_message = { level = "warning", text = "[Rust Lint] cargo not found" } }
+    end
+
+    if not is_rust_project(api) then
+        return { diagnostics = {}, highlights = {},
+            status_message = { level = "info", text = "[Rust Lint] No Cargo.toml found" } }
+    end
+
+    local diags = run_clippy(api, path)
+    local highlights = {}
+    for _, d in ipairs(diags) do
+        local color = d.level == "error" and "error" or (d.level == "warning" and "warning" or "info")
+        table.insert(highlights, {
+            line = d.line,
+            inline = {{ start_col = d.column or 1, end_col = nil, color = color }}
+        })
+    end
+    return { diagnostics = diags, highlights = highlights }
+end
+
+-- Run only build (ignoring config for clippy_enabled)
+local function run_build_only(api, path, content)
+    if api:get_file_extension() ~= "rs" or not path then
+        return { diagnostics = {}, highlights = {} }
+    end
+
+    if not api:command_exists("cargo") then
+        return { diagnostics = {}, highlights = {},
+            status_message = { level = "warning", text = "[Rust Lint] cargo not found" } }
+    end
+
+    if not is_rust_project(api) then
+        return { diagnostics = {}, highlights = {},
+            status_message = { level = "info", text = "[Rust Lint] No Cargo.toml found" } }
+    end
+
+    local diags = run_build(api, path)
+    local highlights = {}
+    for _, d in ipairs(diags) do
+        local color = d.level == "error" and "error" or (d.level == "warning" and "warning" or "info")
+        table.insert(highlights, {
+            line = d.line,
+            inline = {{ start_col = d.column or 1, end_col = nil, color = color }}
+        })
+    end
+    return { diagnostics = diags, highlights = highlights }
+end
+
 -- Handle menu actions
 function M.on_menu_action(api, action, path, content)
-    if action == "run_clippy" then
+    if action == "lint" then
+        -- Run all enabled checks (respects config toggles)
+        return M.on_document_lint(api, path, content)
+
+    elseif action == "run_clippy" then
         if api:get_file_extension() ~= "rs" then
             return { status_message = { level = "warning", text = "Not a Rust file" } }
         end
-        local prev_build = build_enabled
-        build_enabled = false  -- Only run clippy
-        local result = M.on_document_lint(api, path, content)
-        build_enabled = prev_build
-        return result
+        return run_clippy_only(api, path, content)
 
     elseif action == "run_build" then
         if api:get_file_extension() ~= "rs" then
             return { status_message = { level = "warning", text = "Not a Rust file" } }
         end
-        local prev_clippy = clippy_enabled
-        clippy_enabled = false  -- Only run build
-        local result = M.on_document_lint(api, path, content)
-        clippy_enabled = prev_clippy
-        return result
-
-    elseif action == "toggle_clippy" then
-        clippy_enabled = not clippy_enabled
-        local state = clippy_enabled and "enabled" or "disabled"
-        return { status_message = { level = "info", text = "[Rust Lint] Clippy " .. state } }
-
-    elseif action == "toggle_build" then
-        build_enabled = not build_enabled
-        local state = build_enabled and "enabled" or "disabled"
-        return { status_message = { level = "info", text = "[Rust Lint] Build check " .. state } }
+        return run_build_only(api, path, content)
     end
 
     return {}
