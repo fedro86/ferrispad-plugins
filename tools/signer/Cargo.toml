@@ -1,0 +1,13 @@
+[package]
+name = "plugin-signer"
+version = "0.1.0"
+edition = "2021"
+description = "FerrisPad plugin signing tool"
+
+[dependencies]
+ed25519-dalek = { version = "2.1", features = ["rand_core"] }
+rand = "0.8"
+base64 = "0.22"
+sha2 = "0.10"
+hex = "0.4"
+clap = { version = "4.4", features = ["derive"] }
