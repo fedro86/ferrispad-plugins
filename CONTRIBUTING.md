@@ -546,6 +546,53 @@ Keyboard shortcut conventions:
 
 ---
 
+## Plugin Verification & Signing
+
+FerrisPad uses ed25519 digital signatures to verify plugin authenticity. This helps users identify official plugins from the FerrisPad team.
+
+### Verification Status
+
+When users browse plugins in FerrisPad's Plugin Manager, they see one of these badges:
+
+| Badge | Meaning |
+|-------|---------|
+| **Verified** | Signed by the FerrisPad maintainer, checksums match |
+| **Unverified** | No signature provided (third-party or community plugin) |
+| **Invalid** | Signature exists but doesn't match (tampered or corrupted) |
+
+### For Contributors
+
+**You cannot sign plugins yourself.** The signing key is held by the FerrisPad maintainer.
+
+When you submit a plugin via pull request:
+
+1. Your plugin will initially show as **"Unverified"** - this is expected
+2. After review and merge, the maintainer will:
+   - Review your code for security issues
+   - Sign the plugin with the official key
+   - Update `plugins.json` with checksums and signature
+3. Your plugin will then show as **"Verified"** in the Plugin Manager
+
+### What Gets Signed
+
+The signature covers:
+- `init.lua` content (SHA-256 checksum)
+- `plugin.toml` content (SHA-256 checksum)
+- Plugin version number
+
+**Any change to these files invalidates the signature.** After updating your plugin, request a re-sign via a new pull request.
+
+### Can Users Still Install Unverified Plugins?
+
+Yes. Unverified plugins can still be installed - users just see a warning badge. This allows:
+- Testing plugins during development
+- Installing community plugins before official review
+- Using local/custom plugins
+
+The verification system is informational, not restrictive.
+
+---
+
 ## Submission Checklist
 
 Before submitting a pull request:
