@@ -1,9 +1,10 @@
-//! FerrisPad Plugin Signing Tool
+//! FerrisPad Signing Tool
 //!
 //! Usage:
-//!   plugin-signer keygen              - Generate new keypair
-//!   plugin-signer sign <plugin_dir>   - Sign a plugin
-//!   plugin-signer verify <plugin_dir> - Verify a plugin (for testing)
+//!   plugin-signer keygen                    - Generate new keypair
+//!   plugin-signer sign <plugin_dir>         - Sign a plugin
+//!   plugin-signer verify <plugin_dir>       - Verify a plugin (for testing)
+//!   plugin-signer sign-release <binary> <version> <platform> - Sign a release binary
 
 use base64::Engine;
 use clap::{Parser, Subcommand};
@@ -42,6 +43,26 @@ enum Commands {
     },
     /// Show the public key in Rust array format
     ShowKey,
+    /// Sign a release binary (for FerrisPad updates)
+    SignRelease {
+        /// Path to the binary file
+        binary: PathBuf,
+        /// Version string (e.g., "0.9.1")
+        version: String,
+        /// Platform identifier (e.g., "linux-amd64", "macos-universal", "windows-x64.exe")
+        platform: String,
+    },
+    /// Verify a release binary signature
+    VerifyRelease {
+        /// Path to the binary file
+        binary: PathBuf,
+        /// Version string
+        version: String,
+        /// Platform identifier
+        platform: String,
+        /// Base64-encoded signature
+        signature: String,
+    },
 }
 
 fn get_key_dir() -> PathBuf {
@@ -242,6 +263,93 @@ fn show_key() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+/// Compute SHA-256 checksum without the "sha256:" prefix (for release binaries)
+fn compute_checksum_hex(data: &[u8]) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(data);
+    let result = hasher.finalize();
+    hex::encode(result)
+}
+
+/// Sign a release binary
+///
+/// The signature is over: "{version}:{platform}:{sha256_hex}"
+/// This format matches what FerrisPad's updater expects.
+fn sign_release(binary_path: &Path, version: &str, platform: &str) -> Result<(), Box<dyn std::error::Error>> {
+    if !binary_path.exists() {
+        return Err(format!("Binary not found: {:?}", binary_path).into());
+    }
+
+    // Read binary
+    let binary_data = fs::read(binary_path)?;
+    let checksum = compute_checksum_hex(&binary_data);
+
+    // Build message to sign (same format as FerrisPad updater)
+    let message = format!("{}:{}:{}", version, platform, checksum);
+
+    // Sign
+    let signing_key = load_signing_key()?;
+    let signature = signing_key.sign(message.as_bytes());
+    let signature_b64 = base64::engine::general_purpose::STANDARD.encode(signature.to_bytes());
+
+    println!("Binary: {:?}", binary_path);
+    println!("Size: {} bytes", binary_data.len());
+    println!("Version: {}", version);
+    println!("Platform: {}", platform);
+    println!();
+    println!("SHA-256: {}", checksum);
+    println!();
+    println!("Message signed: {}", message);
+    println!("Signature: {}", signature_b64);
+    println!();
+
+    // Write .sig file next to the binary
+    let sig_path = binary_path.with_extension(
+        binary_path
+            .extension()
+            .map(|e| format!("{}.sig", e.to_string_lossy()))
+            .unwrap_or_else(|| "sig".to_string())
+    );
+    fs::write(&sig_path, &signature_b64)?;
+    println!("Signature written to: {:?}", sig_path);
+
+    Ok(())
+}
+
+/// Verify a release binary signature
+fn verify_release(
+    binary_path: &Path,
+    version: &str,
+    platform: &str,
+    signature_b64: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let binary_data = fs::read(binary_path)?;
+    let checksum = compute_checksum_hex(&binary_data);
+
+    let message = format!("{}:{}:{}", version, platform, checksum);
+
+    let verifying_key = load_verifying_key()?;
+    let signature_bytes = base64::engine::general_purpose::STANDARD.decode(signature_b64)?;
+    let signature = Signature::from_slice(&signature_bytes)?;
+
+    match verifying_key.verify(message.as_bytes(), &signature) {
+        Ok(()) => {
+            println!("Verification: PASSED");
+            println!("Binary {} v{} ({}) is authentic.",
+                binary_path.file_name().unwrap().to_string_lossy(),
+                version,
+                platform
+            );
+        }
+        Err(e) => {
+            println!("Verification: FAILED");
+            println!("Error: {}", e);
+        }
+    }
+
+    Ok(())
+}
+
 fn main() {
     let cli = Cli::parse();
 
@@ -250,6 +358,12 @@ fn main() {
         Commands::Sign { plugin_dir } => sign_plugin(&plugin_dir),
         Commands::Verify { plugin_dir, signature } => verify_plugin(&plugin_dir, &signature),
         Commands::ShowKey => show_key(),
+        Commands::SignRelease { binary, version, platform } => {
+            sign_release(&binary, &version, &platform)
+        }
+        Commands::VerifyRelease { binary, version, platform, signature } => {
+            verify_release(&binary, &version, &platform, &signature)
+        }
     };
 
     if let Err(e) = result {
