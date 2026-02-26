@@ -193,71 +193,105 @@ local function scan_project(api)
     local include_hidden = show_hidden(api)
 
     -- Use find to list all files and directories (maxdepth 5 to avoid huge trees)
-    -- -not -path patterns skip noise directories
-    local result = api:run_command("find", project_root,
+    -- Uses -type f and -type d separately to distinguish files from directories,
+    -- avoiding -printf which requires \n (blocked by security validation)
+    local result_files = api:run_command("find", project_root,
         "-maxdepth", "5",
-        "-not", "-path", "*/.git/*",
-        "-not", "-path", "*/.git",
-        "-not", "-path", "*/node_modules/*",
-        "-not", "-path", "*/node_modules",
-        "-not", "-path", "*/target/*",
-        "-not", "-path", "*/target",
-        "-not", "-path", "*/__pycache__/*",
-        "-not", "-path", "*/__pycache__",
-        "-not", "-path", "*/.venv/*",
-        "-not", "-path", "*/.venv",
-        "-not", "-path", "*/.mypy_cache/*",
-        "-not", "-path", "*/.mypy_cache",
-        "-not", "-path", "*/.pytest_cache/*",
-        "-not", "-path", "*/.pytest_cache",
+        "-type", "f",
+        "-not", "-path", project_root .. "/.git/*",
+        "-not", "-path", project_root .. "/node_modules/*",
+        "-not", "-path", project_root .. "/target/*",
+        "-not", "-path", project_root .. "/__pycache__/*",
+        "-not", "-path", project_root .. "/.venv/*",
+        "-not", "-path", project_root .. "/.mypy_cache/*",
+        "-not", "-path", project_root .. "/.pytest_cache/*",
         "-not", "-name", "*.pyc",
         "-not", "-name", "*.o",
-        "-not", "-name", "*.so",
-        "-printf", "%P\t%y\n"
+        "-not", "-name", "*.so"
     )
 
-    if not result or not result.stdout then
+    local result_dirs = api:run_command("find", project_root,
+        "-mindepth", "1",
+        "-maxdepth", "5",
+        "-type", "d",
+        "-not", "-path", project_root .. "/.git/*",
+        "-not", "-path", project_root .. "/.git",
+        "-not", "-path", project_root .. "/node_modules/*",
+        "-not", "-path", project_root .. "/node_modules",
+        "-not", "-path", project_root .. "/target/*",
+        "-not", "-path", project_root .. "/target",
+        "-not", "-path", project_root .. "/__pycache__/*",
+        "-not", "-path", project_root .. "/__pycache__",
+        "-not", "-path", project_root .. "/.venv/*",
+        "-not", "-path", project_root .. "/.venv",
+        "-not", "-path", project_root .. "/.mypy_cache/*",
+        "-not", "-path", project_root .. "/.mypy_cache",
+        "-not", "-path", project_root .. "/.pytest_cache/*",
+        "-not", "-path", project_root .. "/.pytest_cache"
+    )
+
+    if (not result_files or not result_files.stdout) and (not result_dirs or not result_dirs.stdout) then
         return nil, "Failed to scan project directory"
     end
 
-    -- Parse find output: each line is "relative_path\ttype" where type is d or f
-    local entries = {}
-    for line in result.stdout:gmatch("[^\r\n]+") do
-        local rel_path, ftype = line:match("^(.-)\t(%a)$")
-        if rel_path and rel_path ~= "" then
-            local name = rel_path:match("([^/]+)$") or rel_path
-            local parent = rel_path:match("^(.+)/[^/]+$") or ""
+    -- Helper: convert absolute path to relative and filter
+    local prefix = project_root .. "/"
+    local prefix_len = #prefix
 
-            -- Skip noise directories
-            local dominated_by_skip = false
-            for component in rel_path:gmatch("[^/]+") do
-                if SKIP_DIRS[component] then
-                    dominated_by_skip = true
-                    break
-                end
+    local function parse_paths(output, is_dir)
+        local result = {}
+        if not output then return result end
+        for line in output:gmatch("[^\r\n]+") do
+            -- Strip project root prefix to get relative path
+            local rel_path
+            if line:sub(1, prefix_len) == prefix then
+                rel_path = line:sub(prefix_len + 1)
+            else
+                rel_path = line
             end
 
-            -- Skip hidden files/dirs unless configured
-            local dominated_by_hidden = false
-            if not include_hidden then
+            if rel_path and rel_path ~= "" then
+                local name = rel_path:match("([^/]+)$") or rel_path
+                local parent = rel_path:match("^(.+)/[^/]+$") or ""
+
+                -- Skip noise directories
+                local dominated_by_skip = false
                 for component in rel_path:gmatch("[^/]+") do
-                    if is_hidden(component) then
-                        dominated_by_hidden = true
+                    if SKIP_DIRS[component] then
+                        dominated_by_skip = true
                         break
                     end
                 end
-            end
 
-            if not dominated_by_skip and not dominated_by_hidden then
-                table.insert(entries, {
-                    path = rel_path,
-                    parent = parent,
-                    name = name,
-                    is_dir = (ftype == "d"),
-                })
+                -- Skip hidden files/dirs unless configured
+                local dominated_by_hidden = false
+                if not include_hidden then
+                    for component in rel_path:gmatch("[^/]+") do
+                        if is_hidden(component) then
+                            dominated_by_hidden = true
+                            break
+                        end
+                    end
+                end
+
+                if not dominated_by_skip and not dominated_by_hidden then
+                    table.insert(result, {
+                        path = rel_path,
+                        parent = parent,
+                        name = name,
+                        is_dir = is_dir,
+                    })
+                end
             end
         end
+        return result
     end
+
+    local entries = {}
+    local dir_entries = parse_paths(result_dirs and result_dirs.stdout, true)
+    local file_entries = parse_paths(result_files and result_files.stdout, false)
+    for _, e in ipairs(dir_entries) do table.insert(entries, e) end
+    for _, e in ipairs(file_entries) do table.insert(entries, e) end
 
     -- Build tree structure
     local root_children = {}
@@ -339,7 +373,12 @@ local function scan_project(api)
 
     return {
         title = project_name,
-        children = root_children,
+        root = {
+            label = project_name,
+            icon = "folder",
+            expanded = true,
+            children = root_children,
+        },
     }, nil
 end
 

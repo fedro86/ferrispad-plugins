@@ -44,10 +44,10 @@
       "tags": ["file-explorer", "tree-view", "navigation"],
       "min_ferrispad_version": "0.9.1",
       "checksums": {
-        "init.lua": "sha256:5cfb9b719238f55d4937d78c0e8176ad9cf3dc65c9336c17fba54d50bd605019",
+        "init.lua": "sha256:7940b70a770f43509939cdadaffe5a8878383a1cf22a569fd2992e66cfd24020",
         "plugin.toml": "sha256:fbb33645bc16ab96db82d6dd8dfdedb342330bc91c1e8d842eed436efbc783ee"
       },
-      "signature": "pe5Bt7iST9cn8q4FiEeZgoU819IT30loiEa5ZqZbRSDYZXsPD3Z3EnQyzvelwRi1UMAjxyoGbedneoAhnJ2sAg==",
+      "signature": "odyK6i8K42B9jaqdz2qJIUU29q5Da5R3r2qHm+fCTdGH2fOffYDh9ihD1abigvyLKxq5bd1RstD8uCZNpgC0CA==",
       "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/file-explorer/README.md"
     }
   ]
