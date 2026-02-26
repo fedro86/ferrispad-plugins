@@ -56,13 +56,6 @@ Access plugin settings via **Plugins > Rust Lint > Settings...** in FerrisPad.
 | Run Clippy | Enable/disable clippy when running "Run All Checks" | Enabled |
 | Run Cargo Build | Enable/disable cargo build when running "Run All Checks" | Enabled |
 
-### Optional Shortcuts
-
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| Clippy Shortcut | Keyboard shortcut for "Run Clippy Only" | (none) |
-| Build Shortcut | Keyboard shortcut for "Run Build Only" | (none) |
-
 ### Dropdown Settings
 
 | Parameter | Options | Default |
@@ -151,5 +144,5 @@ rustup component add clippy
 
 ## Version
 
-- Plugin version: 1.3.0
+- Plugin version: 1.4.0
 - Requires FerrisPad 0.9.1+

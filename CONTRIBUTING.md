@@ -180,11 +180,10 @@ end
 ### User Experience
 
 1. Users access config via `Plugins → {Plugin} → Settings...`
-2. A dialog appears with:
-   - **Shortcut** field (to override the default keyboard shortcut)
-   - Dynamic fields based on `[[config.params]]` definitions
+2. A dialog appears with dynamic fields based on `[[config.params]]` definitions
 3. Values are saved to `~/.config/ferrispad/settings.json`
 4. Config persists across FerrisPad restarts and plugin updates
+5. Keyboard shortcuts are managed centrally via `Edit → Key Shortcuts...`
 
 ### Best Practices
 

@@ -1,5 +1,5 @@
 name = "Python Lint"
-version = "2.5.0"
+version = "2.6.0"
 description = "Run ruff/pyright on Python files (supports project venv)"
 
 [permissions]
@@ -27,24 +27,10 @@ type = "boolean"
 default = "true"
 
 [[config.params]]
-key = "ruff_shortcut"
-label = "Ruff Shortcut"
-type = "string"
-default = ""
-placeholder = "Ctrl+Shift+R"
-
-[[config.params]]
 key = "pyright_enabled"
 label = "Run Pyright"
 type = "boolean"
 default = "true"
-
-[[config.params]]
-key = "pyright_shortcut"
-label = "Pyright Shortcut"
-type = "string"
-default = ""
-placeholder = "Ctrl+Shift+Y"
 
 [[config.params]]
 key = "ruff_select"

@@ -1,5 +1,5 @@
 name = "Rust Lint"
-version = "1.3.0"
+version = "1.4.0"
 description = "Run clippy and cargo build on Rust files"
 
 [permissions]
@@ -27,24 +27,10 @@ type = "boolean"
 default = "true"
 
 [[config.params]]
-key = "clippy_shortcut"
-label = "Clippy Shortcut"
-type = "string"
-default = ""
-placeholder = "Ctrl+Shift+C"
-
-[[config.params]]
 key = "build_enabled"
 label = "Run Cargo Build"
 type = "boolean"
 default = "true"
-
-[[config.params]]
-key = "build_shortcut"
-label = "Build Shortcut"
-type = "string"
-default = ""
-placeholder = "Ctrl+Shift+B"
 
 [[config.params]]
 key = "clippy_level"
