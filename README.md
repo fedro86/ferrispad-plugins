@@ -8,6 +8,7 @@ Official plugins for [FerrisPad](https://github.com/fedro86/ferrispad), a lightw
 |--------|-------------|--------|
 | [python-lint](python-lint/) | Python linting with ruff and pyright | Stable |
 | [rust-lint](rust-lint/) | Rust linting with clippy and cargo build | Stable |
+| [file-explorer](file-explorer/) | File explorer tree view for project directories | Beta |
 
 ## Installation
 

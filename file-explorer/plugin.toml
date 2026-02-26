@@ -1,0 +1,22 @@
+name = "file-explorer"
+version = "0.1.0"
+description = "File explorer tree view for project directories"
+
+[permissions]
+execute = ["find"]
+
+[[menu_items]]
+label = "Show File Explorer"
+action = "show_explorer"
+shortcut = "Ctrl+Shift+E"
+
+[[menu_items]]
+label = "Refresh Explorer"
+action = "refresh"
+
+[config]
+[[config.params]]
+key = "show_hidden_files"
+label = "Show Hidden Files"
+type = "boolean"
+default = "false"
