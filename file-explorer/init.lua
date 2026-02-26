@@ -398,6 +398,9 @@ function M.on_menu_action(api, action, path, content)
 
         api:log("File explorer: built tree with title '" .. tree_data.title .. "'")
 
+        -- Add on_click handler so tree node clicks trigger on_widget_action
+        tree_data.on_click = "open_file"
+
         return {
             tree_view = tree_data
         }
@@ -432,12 +435,11 @@ function M.on_widget_action(api, widget_type, action, session_id, data)
         local rel_path = table.concat(node_path, "/")
         local full_path = project_root .. "/" .. rel_path
 
-        -- Check if it's a file (not a directory) by checking if it has an extension
-        -- or just try to open it - if it's a directory, the editor will handle it
+        -- Check if it's an existing file (not a directory) and open it
         if api:file_exists(full_path) then
-            -- Check it's not a directory by trying to detect extension
-            local name = node_path[#node_path]
-            if name:match("%.%w+$") then
+            -- Verify it's not a directory by checking with test -f
+            local check = api:run_command("test", "-f", full_path)
+            if check and check.exit_code == 0 then
                 api:log("File explorer: opening " .. full_path)
                 return { open_file = full_path }
             end

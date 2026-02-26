@@ -5,14 +5,15 @@ Browse your project directory as a tree view directly in FerrisPad.
 ## Features
 
 - **Tree View**: Shows project files and folders in a collapsible tree panel
-- **Open on Click**: Click any file to open it in the editor
+- **Open on Click**: Click any file to open it in the editor (including extensionless files like Makefile, LICENSE)
+- **Configurable Position**: Show the explorer on the Left, Right, or Bottom (via plugin settings)
 - **Hidden Files Toggle**: Show/hide dotfiles via plugin settings
 - **Smart Filtering**: Automatically skips noise directories (`.git`, `node_modules`, `target`, `__pycache__`, `.venv`, etc.)
 - **Refresh**: Re-scan the project directory on demand
 
 ## Requirements
 
-The `find` command must be available (pre-installed on Linux and macOS).
+The `find` and `test` commands must be available (pre-installed on Linux and macOS).
 
 ## Installation
 
@@ -41,6 +42,9 @@ Access plugin settings via **Plugins > file-explorer > Settings...** in FerrisPa
 | Parameter | Description | Default |
 |-----------|-------------|---------|
 | Show Hidden Files | Include dotfiles and dot-directories in the tree | Disabled |
+| Panel Position | Where to display the explorer: Left, Right, or Bottom | Left |
+
+**Note:** Changing the panel position requires restarting FerrisPad.
 
 ## Behavior
 
@@ -95,10 +99,10 @@ These file types are excluded:
 
 ### File Won't Open on Click
 
-- Only files with a recognized extension open on click
+- Ensure the file exists and is a regular file (not a directory)
 - Directory nodes expand/collapse instead of opening
 
 ## Version
 
-- Plugin version: 0.1.0
+- Plugin version: 0.2.0
 - Requires FerrisPad 0.9.1+

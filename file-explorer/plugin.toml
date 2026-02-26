@@ -1,9 +1,9 @@
 name = "file-explorer"
-version = "0.1.0"
+version = "0.2.0"
 description = "File explorer tree view for project directories"
 
 [permissions]
-execute = ["find"]
+execute = ["find", "test"]
 
 [[menu_items]]
 label = "Show File Explorer"
@@ -20,3 +20,10 @@ key = "show_hidden_files"
 label = "Show Hidden Files"
 type = "boolean"
 default = "false"
+
+[[config.params]]
+key = "position"
+label = "Panel Position"
+type = "choice"
+default = "left"
+options = ["left|Left", "right|Right", "bottom|Bottom"]
