@@ -395,25 +395,170 @@ return {
     status_message = {
         level = "warning",
         text = "[Plugin] Tool not found"
+    },
+
+    -- Modified Content → Replace editor buffer contents
+    modified_content = "new file content here",
+
+    -- Split View → Side-by-side comparison panel
+    split_view = {
+        title = "Diff View",
+        left = {
+            content = "original text",
+            label = "Original",
+            line_numbers = true,
+            highlights = {
+                { line = 1, color = "removed" }
+            }
+        },
+        right = {
+            content = "modified text",
+            label = "Modified",
+            line_numbers = true,
+            highlights = {
+                { line = 1, color = "added" }
+            }
+        },
+        actions = {
+            { label = "Accept", action = "accept" },
+            { label = "Reject", action = "reject" }
+        }
+    },
+
+    -- Tree View → Collapsible tree panel (e.g., file explorer, outline)
+    tree_view = {
+        title = "Project Files",
+        root = {
+            label = "src",
+            icon = "folder",
+            children = {
+                { label = "main.rs", icon = "file", data = "/path/to/main.rs" },
+                { label = "lib.rs", icon = "file", data = "/path/to/lib.rs" }
+            }
+        },
+        expand_depth = 1,     -- levels to auto-expand (0 = none, -1 = all)
+        on_click = "node_clicked"  -- action name sent to on_widget_action
+    },
+
+    -- Open File → Request FerrisPad to open a file in the editor
+    open_file = "/absolute/path/to/file.rs"
+}
+```
+
+All fields are optional — return only the ones your plugin needs.
+
+### 5. Split View
+
+**Location**: Bottom panel, side-by-side panes
+
+**Purpose**: Show comparisons (diffs, AI suggestions, before/after)
+
+The `on_widget_action` hook is called when the user clicks an action button:
+
+```lua
+function M.on_widget_action(api, widget_type, action, session_id, data)
+    if widget_type == "split_view" and action == "accept" then
+        -- data.right_content contains the right pane text
+        return { modified_content = data.right_content }
+    end
+    return {}
+end
+```
+
+**Highlight colors**: `"added"` (green), `"removed"` (red), `"modified"` (yellow)
+
+### 6. Tree View
+
+**Location**: Bottom panel, collapsible tree
+
+**Purpose**: Show hierarchical data (file browsers, outlines, YAML viewers)
+
+Each tree node supports:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `label` | Yes | Display text for the node |
+| `icon` | No | Icon hint: `"file"`, `"folder"`, `"error"`, etc. |
+| `data` | No | Arbitrary string payload (e.g., file path) |
+| `children` | No | Array of child nodes (presence makes it a branch) |
+| `expanded` | No | Whether the node starts expanded (default: false) |
+
+The `on_widget_action` hook is called when the user clicks a node:
+
+```lua
+function M.on_widget_action(api, widget_type, action, session_id, data)
+    if widget_type == "tree_view" and action == "node_clicked" then
+        -- data.node_path is an array of labels from root to clicked node
+        -- e.g., {"src", "app", "state.rs"}
+        local file = reconstruct_path(data.node_path)
+        return { open_file = file }
+    end
+    return {}
+end
+```
+
+Alternatively, use `yaml_content` instead of `root` to display parsed YAML as a tree:
+
+```lua
+return {
+    tree_view = {
+        title = "Config",
+        yaml_content = "key: value\nnested:\n  child: 1"
     }
 }
 ```
 
+### 7. Open File
+
+**Purpose**: Request FerrisPad to open a file in the editor
+
+```lua
+return { open_file = "/absolute/path/to/file.rs" }
+```
+
+**Security**: The path is validated against the project root. Files outside the project root are blocked. Symlinks are resolved before validation.
+
+### 8. Modified Content
+
+**Purpose**: Replace the current editor buffer contents (e.g., formatting, auto-fix)
+
+```lua
+return { modified_content = "new file content" }
+```
+
+Use this from `on_menu_action` or `on_widget_action` (e.g., accepting a split view suggestion).
+
 ### Widget Decision Tree
 
 ```
-Is there feedback for the user?
-├── Yes, linting results
-│   └── Return `diagnostics` array + `highlights` array
+What does the plugin need to show or do?
+├── Linting results
+│   └── Return `diagnostics` + `highlights`
 │       (Diagnostic panel + editor highlights)
 │
-├── Yes, something went wrong
+├── Error/warning feedback
 │   └── Return `status_message` with level="warning" or "error"
 │       (Toast notification)
 │
-├── Yes, user action confirmed (toggle)
+├── User action confirmed (toggle)
 │   └── Return `status_message` with level="info"
 │       (Toast notification)
+│
+├── Side-by-side comparison
+│   └── Return `split_view` with left/right panes
+│       (Split panel with Accept/Reject buttons)
+│
+├── Hierarchical data
+│   └── Return `tree_view` with root node
+│       (Collapsible tree panel)
+│
+├── Open a file
+│   └── Return `open_file` with absolute path
+│       (Opens in editor tab, validated against project root)
+│
+├── Replace editor content
+│   └── Return `modified_content` with new text
+│       (Replaces current buffer)
 │
 └── No issues found
     └── Return empty `diagnostics` and `highlights`
