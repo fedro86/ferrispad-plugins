@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-02-26",
+  "updated": "2026-02-27",
   "plugins": [
     {
       "name": "python-lint",
@@ -36,18 +36,18 @@
     },
     {
       "name": "file-explorer",
-      "version": "0.2.0",
-      "description": "File explorer tree view for project directories with click-to-open, configurable position, hidden files toggle, and smart directory filtering",
+      "version": "0.2.1",
+      "description": "File explorer tree view for project directories with double-click-to-open, Enter key support, configurable position, hidden files toggle, and smart directory filtering",
       "path": "file-explorer/",
       "author": "Federico Conticello",
       "license": "MIT",
       "tags": ["file-explorer", "tree-view", "navigation"],
       "min_ferrispad_version": "0.9.1",
       "checksums": {
-        "init.lua": "sha256:dbb805c835adae40a832f1c78812940d34c7166713f399aadca23e546dce20f1",
-        "plugin.toml": "sha256:8b219d7783c73ff654cd012bfee9d1157bd625fb35521b7feaca333bf29e0153"
+        "init.lua": "sha256:c9ab092d87872773bf45df34ddea00c8bb5faa3a4ad374e855be0ed93f5b5cfd",
+        "plugin.toml": "sha256:5f9358a5d8b3352e6dab8701d7aa2a5cdeabb8e230d18a51d2f9bd782ceb21fb"
       },
-      "signature": "gqyad9wtTWdM8isiFN1XmEfZVFNiqpr0YRnVK7kqhtssVkWXa1F2M1bjomHKRCgBnbyUztx0lLRjt0tDX1BxBQ==",
+      "signature": "8Fa+L4n0cQA8ZMnfbqzQWEYTK1NlGtrXbmN+e1/KbbmuQvUbuAXhUPjLK1SOMToquwsZFSvToGohkUgjBPz9Bw==",
       "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/file-explorer/README.md"
     }
   ]

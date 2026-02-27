@@ -5,6 +5,16 @@ All notable changes to the File Explorer plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-02-27
+
+### Fixed
+- File opening now uses `check.success` instead of `check.exit_code` (matching the API)
+- Double-click required to open files (prevents accidental opens when browsing)
+- Enter key opens the selected file
+
+### Added
+- Debug logging for file path resolution
+
 ## [0.2.0] - 2026-02-26
 
 ### Fixed

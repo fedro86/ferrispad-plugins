@@ -434,12 +434,13 @@ function M.on_widget_action(api, widget_type, action, session_id, data)
         -- Reconstruct path from node labels
         local rel_path = table.concat(node_path, "/")
         local full_path = project_root .. "/" .. rel_path
+        api:log("File explorer: trying path: " .. full_path)
 
         -- Check if it's an existing file (not a directory) and open it
         if api:file_exists(full_path) then
             -- Verify it's not a directory by checking with test -f
             local check = api:run_command("test", "-f", full_path)
-            if check and check.exit_code == 0 then
+            if check and check.success then
                 api:log("File explorer: opening " .. full_path)
                 return { open_file = full_path }
             end
