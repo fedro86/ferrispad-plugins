@@ -277,7 +277,7 @@ end
 -- Main lint function
 function M.on_document_lint(api, path, content)
     if api:get_file_extension() ~= "py" or not path then
-        return { diagnostics = {}, highlights = {} }
+        return nil
     end
 
     local all_diagnostics = {}
@@ -338,7 +338,7 @@ end
 -- Run only ruff (ignoring config for pyright_enabled)
 local function run_ruff_only(api, path, content)
     if api:get_file_extension() ~= "py" or not path then
-        return { diagnostics = {}, highlights = {} }
+        return nil
     end
 
     local diags, available = run_ruff(api, path)
@@ -361,7 +361,7 @@ end
 -- Run only pyright (ignoring config for ruff_enabled)
 local function run_pyright_only(api, path, content)
     if api:get_file_extension() ~= "py" or not path then
-        return { diagnostics = {}, highlights = {} }
+        return nil
     end
 
     local diags, available = run_pyright(api, path)

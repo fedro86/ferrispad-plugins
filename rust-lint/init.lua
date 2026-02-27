@@ -192,7 +192,7 @@ end
 -- Main lint function
 function M.on_document_lint(api, path, content)
     if api:get_file_extension() ~= "rs" or not path then
-        return { diagnostics = {}, highlights = {} }
+        return nil
     end
 
     -- Check if cargo is installed (similar to Python lint checking for ruff/pyright)
@@ -255,7 +255,7 @@ end
 -- Run only clippy (ignoring config for build_enabled)
 local function run_clippy_only(api, path, content)
     if api:get_file_extension() ~= "rs" or not path then
-        return { diagnostics = {}, highlights = {} }
+        return nil
     end
 
     if not api:command_exists("cargo") then
@@ -283,7 +283,7 @@ end
 -- Run only build (ignoring config for clippy_enabled)
 local function run_build_only(api, path, content)
     if api:get_file_extension() ~= "rs" or not path then
-        return { diagnostics = {}, highlights = {} }
+        return nil
     end
 
     if not api:command_exists("cargo") then
