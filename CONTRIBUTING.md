@@ -11,6 +11,7 @@ Thank you for your interest in contributing to FerrisPad's plugin ecosystem!
 - [Diagnostic Format](#diagnostic-format)
 - [Menu Items](#menu-items)
 - [Testing Your Plugin](#testing-your-plugin)
+- [Plugin Verification & Signing](#plugin-verification--signing)
 - [Submission Checklist](#submission-checklist)
 
 ---
@@ -442,7 +443,13 @@ return {
     },
 
     -- Open File → Request FerrisPad to open a file in the editor
-    open_file = "/absolute/path/to/file.rs"
+    open_file = "/absolute/path/to/file.rs",
+
+    -- Clipboard Text → Copy a string to the system clipboard
+    clipboard_text = "text to copy",
+
+    -- Go To Line → Navigate the editor cursor to a line (1-indexed)
+    goto_line = 42
 }
 ```
 
@@ -497,7 +504,7 @@ end
 | `children` | No | Array of child nodes (presence makes it a branch) |
 | `expanded` | No | Whether the node starts expanded (default: false) |
 
-The `on_widget_action` hook is called when the user activates a node (single-click or double-click depending on `click_mode`) or selects a context menu action:
+The `on_widget_action` hook is called when the user activates a node (single-click or double-click depending on `click_mode`) or selects a context menu action. `api:get_text()` is available in this hook (the current document's content is read automatically from the file path):
 
 ```lua
 function M.on_widget_action(api, widget_type, action, session_id, data)
@@ -506,6 +513,7 @@ function M.on_widget_action(api, widget_type, action, session_id, data)
         -- e.g., {"src", "app", "state.rs"}
         local file = reconstruct_path(data.node_path)
         return { open_file = file }
+        -- Or navigate to a line: return { goto_line = 42 }
     end
     return {}
 end
@@ -636,6 +644,63 @@ return { modified_content = "new file content" }
 
 Use this from `on_menu_action` or `on_widget_action` (e.g., accepting a split view suggestion).
 
+### 9. Clipboard Text
+
+**Purpose**: Copy a string to the system clipboard
+
+```lua
+return { clipboard_text = "text to copy" }
+```
+
+Use this from `on_widget_action` to copy values from tree nodes, or from any hook that needs to put text on the clipboard. Unlike the `clipboard = true` context menu field (which copies the filesystem path), `clipboard_text` lets you copy arbitrary text.
+
+### 10. Go To Line
+
+**Purpose**: Navigate the editor cursor to a specific line number (1-indexed)
+
+```lua
+return { goto_line = 42 }
+```
+
+Use this from `on_widget_action` to jump to a line when the user clicks a tree node. For example, a YAML tree viewer can search the document text for the clicked key and return the matching line number:
+
+```lua
+elseif action == "node_clicked" then
+    local text = api:get_text()
+    if not text then return nil end
+    local key = extract_key(node_path)
+    local line_num = find_key_line(text, key)
+    if line_num then
+        return { goto_line = line_num }
+    end
+end
+```
+
+**Note**: `api:get_text()` is available in `on_widget_action` — the file content is read automatically from the current document path.
+
+### 11. Returning Values from `on_document_open`
+
+The `on_document_open` hook can return the same result table as other hooks. This enables auto-displaying widgets when a file is opened:
+
+```lua
+function M.on_document_open(api, path)
+    if should_show_tree(path) then
+        local content = api:get_text()  -- file content is available
+        return {
+            tree_view = {
+                title = "My Viewer",
+                yaml_content = content,
+                expand_depth = 2,
+                click_mode = "single"
+            }
+        }
+    end
+    return nil  -- returning nil skips this plugin
+end
+```
+
+**Note**: `api:get_text()` returns the file content in `on_document_open` (the file is read automatically). The `path` parameter is also passed as a separate argument.
+
 ### Widget Decision Tree
 
 ```
@@ -667,6 +732,18 @@ What does the plugin need to show or do?
 ├── Replace editor content
 │   └── Return `modified_content` with new text
 │       (Replaces current buffer)
+│
+├── Copy text to clipboard
+│   └── Return `clipboard_text` with the text
+│       (Copies to system clipboard)
+│
+├── Navigate to a line
+│   └── Return `goto_line` with line number (1-indexed)
+│       (Moves editor cursor and scrolls to line)
+│
+├── Auto-display on file open
+│   └── Return widget from `on_document_open`
+│       (e.g., tree_view for YAML/JSON files)
 │
 └── No issues found
     └── Return empty `diagnostics` and `highlights`
@@ -919,12 +996,14 @@ return {
 
 Keyboard shortcut conventions:
 
-| Language | Run All Shortcut |
-|----------|------------------|
-| Python | `Ctrl+Shift+P` |
-| Rust | `Ctrl+Shift+R` |
-| JavaScript | `Ctrl+Shift+J` |
-| Go | `Ctrl+Shift+G` |
+| Plugin | Shortcut |
+|--------|----------|
+| Python Lint | `Ctrl+Shift+P` |
+| Rust Lint | `Ctrl+Shift+R` |
+| JavaScript Lint | `Ctrl+Shift+J` |
+| Go Lint | `Ctrl+Shift+G` |
+| File Explorer | `Ctrl+Shift+E` |
+| YAML/JSON Viewer | `Ctrl+Shift+Y` |
 
 ---
 

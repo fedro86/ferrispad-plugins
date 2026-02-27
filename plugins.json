@@ -49,6 +49,22 @@
       },
       "signature": "RT0gbJQCtQzLCJ83IoY4H9C1WNsYclZei7ZialokSU2rFa4AWBTHCiLJ9tQrRbaKBoWFmhflAsqBuuL/ysulDw==",
       "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/file-explorer/README.md"
+    },
+    {
+      "name": "yaml-json-viewer",
+      "version": "1.0.1",
+      "description": "Tree viewer for YAML and JSON files with collapsible nodes, search, copy value, and copy key path",
+      "path": "yaml-json-viewer/",
+      "author": "Federico Conticello",
+      "license": "MIT",
+      "tags": ["yaml", "json", "tree-view", "viewer"],
+      "min_ferrispad_version": "0.9.1",
+      "checksums": {
+        "init.lua": "sha256:084cf042d9efc9bf12a0fdc02b3869c24ea750dbe62e5affaabfc4b8b8605b00",
+        "plugin.toml": "sha256:2f2d89c55d168ddb4abd3433000d61bc1ba91b9937e380ae420211a357f79dfc"
+      },
+      "signature": "oRLZ2D6mjZ/PItiXv9mlHRmoYGE0LjsEJJ3xMBKB3DERaHOFjUzMFTBza7Zf9KMjX8/4zPMZxQZ2YKaOmcPODQ==",
+      "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/yaml-json-viewer/README.md"
     }
   ]
 }
