@@ -5,6 +5,19 @@ All notable changes to the File Explorer plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-02-27
+
+### Added
+- **Plugin-defined context menus**: Right-click files, folders, or empty area for contextual actions
+  - Files: Open, Copy Path, Rename, Delete
+  - Folders: New File, New Folder, Copy Path, Rename, Delete
+  - Empty area: New File, New Folder, Refresh
+- **Refresh button** in tree panel header (re-scans same folder without changing project root)
+- New file permissions: `touch`, `mkdir`, `mv`, `rm` for file management actions
+
+### Changed
+- Context menu items are now declared by the plugin via the `context_menu` API (no longer hardcoded in FerrisPad)
+
 ## [0.2.1] - 2026-02-27
 
 ### Fixed

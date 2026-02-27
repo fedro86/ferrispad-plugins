@@ -6,14 +6,18 @@ Browse your project directory as a tree view directly in FerrisPad.
 
 - **Tree View**: Shows project files and folders in a collapsible tree panel
 - **Double-Click to Open**: Double-click any file to open it in the editor (including extensionless files like Makefile, LICENSE). Press Enter to open the selected file.
+- **Context Menu**: Right-click files, folders, or empty area for contextual actions (New File, New Folder, Rename, Delete, Copy Path, Refresh)
+- **File Management**: Create, rename, and delete files and folders directly from the tree
 - **Configurable Position**: Show the explorer on the Left, Right, or Bottom (via plugin settings)
 - **Hidden Files Toggle**: Show/hide dotfiles via plugin settings
 - **Smart Filtering**: Automatically skips noise directories (`.git`, `node_modules`, `target`, `__pycache__`, `.venv`, etc.)
-- **Refresh**: Re-scan the project directory on demand
+- **Refresh**: Re-scan the project directory via context menu, header button, or menu action
 
 ## Requirements
 
-The `find` and `test` commands must be available (pre-installed on Linux and macOS).
+The following commands must be available (pre-installed on Linux and macOS):
+- `find`, `test` — directory scanning and file type detection
+- `touch`, `mkdir`, `mv`, `rm` — file management (create, rename, delete)
 
 ## Installation
 
@@ -31,9 +35,17 @@ cp -r file-explorer ~/.config/ferrispad/plugins/
 - **Plugins > file-explorer > Refresh Explorer**: Re-scan and update the tree
 - **Plugins > file-explorer > Settings...**: Configure plugin options
 
+### Context Menu (Right-Click)
+
+| Target | Actions |
+|--------|---------|
+| **File** | Open, Copy Path, Rename, Delete |
+| **Folder** | New File, New Folder, Copy Path, Rename, Delete |
+| **Empty area** | New File, New Folder, Refresh |
+
 ### Opening Files
 
-Double-click on any file node in the tree view to open it in the editor. You can also select a file and press Enter. Directory nodes expand/collapse on single click.
+Double-click on any file node in the tree view to open it in the editor. You can also select a file and press Enter, or use "Open" from the right-click context menu. Directory nodes expand/collapse on single click.
 
 ## Configuration
 
@@ -104,5 +116,5 @@ These file types are excluded:
 
 ## Version
 
-- Plugin version: 0.2.1
+- Plugin version: 0.3.0
 - Requires FerrisPad 0.9.1+

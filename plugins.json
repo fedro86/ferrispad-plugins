@@ -36,18 +36,18 @@
     },
     {
       "name": "file-explorer",
-      "version": "0.2.1",
-      "description": "File explorer tree view for project directories with double-click-to-open, Enter key support, configurable position, hidden files toggle, and smart directory filtering",
+      "version": "0.3.0",
+      "description": "File explorer tree view for project directories with plugin-defined context menus, file management (create/rename/delete), double-click-to-open, configurable position, hidden files toggle, and smart directory filtering",
       "path": "file-explorer/",
       "author": "Federico Conticello",
       "license": "MIT",
       "tags": ["file-explorer", "tree-view", "navigation"],
       "min_ferrispad_version": "0.9.1",
       "checksums": {
-        "init.lua": "sha256:c9ab092d87872773bf45df34ddea00c8bb5faa3a4ad374e855be0ed93f5b5cfd",
-        "plugin.toml": "sha256:5f9358a5d8b3352e6dab8701d7aa2a5cdeabb8e230d18a51d2f9bd782ceb21fb"
+        "init.lua": "sha256:3db5783cfebca24739a841fd990fbc614e90b52baf8cc3c3e8e4a4f17fc63e25",
+        "plugin.toml": "sha256:e92c6d3c2b224c96f54e0d4557d257f8b5661af7a02f627bcf958b5474fd2c47"
       },
-      "signature": "8Fa+L4n0cQA8ZMnfbqzQWEYTK1NlGtrXbmN+e1/KbbmuQvUbuAXhUPjLK1SOMToquwsZFSvToGohkUgjBPz9Bw==",
+      "signature": "RT0gbJQCtQzLCJ83IoY4H9C1WNsYclZei7ZialokSU2rFa4AWBTHCiLJ9tQrRbaKBoWFmhflAsqBuuL/ysulDw==",
       "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/file-explorer/README.md"
     }
   ]

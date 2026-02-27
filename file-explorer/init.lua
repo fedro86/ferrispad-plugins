@@ -379,7 +379,50 @@ local function scan_project(api)
             expanded = true,
             children = root_children,
         },
+        context_path = project_root,
+        context_menu = {
+            -- Folder items
+            { label = "New File...",   action = "new_file",   target = "folder", input = "New file name:" },
+            { label = "New Folder...", action = "new_folder", target = "folder", input = "New folder name:" },
+            { label = "Copy Path",    target = "folder", clipboard = true },
+            { label = "Rename...",    action = "rename",     target = "folder", input = "Rename to:", prefill_name = true },
+            { label = "Delete",       action = "delete",     target = "folder", confirm = "Delete this folder and all contents?" },
+            -- File items
+            { label = "Open",         action = "node_clicked", target = "file" },
+            { label = "Copy Path",    target = "file", clipboard = true },
+            { label = "Rename...",    action = "rename",     target = "file", input = "Rename to:", prefill_name = true },
+            { label = "Delete",       action = "delete",     target = "file", confirm = "Delete this file?" },
+            -- Empty area items
+            { label = "New File...",   action = "new_file",   target = "empty", input = "New file name:" },
+            { label = "New Folder...", action = "new_folder", target = "empty", input = "New folder name:" },
+            { label = "Refresh",      action = "refresh",    target = "empty" },
+        },
     }, nil
+end
+
+-- Reconstruct the full filesystem path from a node_path array
+local function reconstruct_path(api, node_path)
+    local project_root = api:get_project_root()
+    if not project_root then return nil, nil end
+    if not node_path or #node_path == 0 then
+        return project_root, project_root
+    end
+    return project_root .. "/" .. table.concat(node_path, "/"), project_root
+end
+
+-- Refresh the tree and return it as a widget result
+local function refresh_tree(api)
+    local tree_data, err = scan_project(api)
+    if not tree_data then
+        return {
+            status_message = {
+                level = "warning",
+                text = "[File Explorer] " .. (err or "Unknown error"),
+            }
+        }
+    end
+    tree_data.on_click = "open_file"
+    return { tree_view = tree_data }
 end
 
 -- Handle menu actions
@@ -409,42 +452,123 @@ function M.on_menu_action(api, action, path, content)
     return {}
 end
 
--- Handle widget interactions (tree view node clicks)
+-- Handle widget interactions (tree view node clicks and context actions)
 function M.on_widget_action(api, widget_type, action, session_id, data)
-    if widget_type == "tree_view" and action == "node_clicked" then
-        local node_path = data.node_path
-        if not node_path or #node_path == 0 then
+    if widget_type ~= "tree_view" then
+        return {}
+    end
+
+    local node_path = data.node_path or {}
+
+    if action == "node_clicked" then
+        if #node_path == 0 then
             return {}
         end
 
-        -- The last element is the clicked node label
-        -- We need to reconstruct the file path from the node hierarchy
-        -- The data field on file nodes contains the absolute path
-        -- However, the node_path only gives us labels, not data fields
+        local full_path, _ = reconstruct_path(api, node_path)
+        if not full_path then return {} end
 
-        -- For tree views, the node_path is the sequence of labels from root to clicked node
-        -- e.g., {"src", "app", "state.rs"}
-        -- We need to reconstruct the full path from the project root
-
-        local project_root = api:get_project_root()
-        if not project_root then
-            return {}
-        end
-
-        -- Reconstruct path from node labels
-        local rel_path = table.concat(node_path, "/")
-        local full_path = project_root .. "/" .. rel_path
         api:log("File explorer: trying path: " .. full_path)
 
         -- Check if it's an existing file (not a directory) and open it
         if api:file_exists(full_path) then
-            -- Verify it's not a directory by checking with test -f
             local check = api:run_command("test", "-f", full_path)
             if check and check.success then
                 api:log("File explorer: opening " .. full_path)
                 return { open_file = full_path }
             end
         end
+
+    elseif action == "new_file" then
+        local input_text = data.input_text
+        if not input_text or input_text == "" then return {} end
+
+        local parent_path, _ = reconstruct_path(api, node_path)
+        if not parent_path then return {} end
+
+        local new_path = parent_path .. "/" .. input_text
+        api:log("File explorer: creating file " .. new_path)
+
+        local result = api:run_command("touch", new_path)
+        if not result or not result.success then
+            return {
+                status_message = {
+                    level = "error",
+                    text = "[File Explorer] Failed to create file: " .. input_text,
+                }
+            }
+        end
+
+        local tree_result = refresh_tree(api)
+        tree_result.open_file = new_path
+        return tree_result
+
+    elseif action == "new_folder" then
+        local input_text = data.input_text
+        if not input_text or input_text == "" then return {} end
+
+        local parent_path, _ = reconstruct_path(api, node_path)
+        if not parent_path then return {} end
+
+        local new_path = parent_path .. "/" .. input_text
+        api:log("File explorer: creating folder " .. new_path)
+
+        local result = api:run_command("mkdir", "-p", new_path)
+        if not result or not result.success then
+            return {
+                status_message = {
+                    level = "error",
+                    text = "[File Explorer] Failed to create folder: " .. input_text,
+                }
+            }
+        end
+
+        return refresh_tree(api)
+
+    elseif action == "rename" then
+        local input_text = data.input_text
+        if not input_text or input_text == "" then return {} end
+
+        local old_path, _ = reconstruct_path(api, node_path)
+        if not old_path then return {} end
+
+        -- Build new path: same parent directory + new name
+        local parent_dir = old_path:match("^(.+)/[^/]+$") or ""
+        local new_path = parent_dir .. "/" .. input_text
+        api:log("File explorer: renaming " .. old_path .. " -> " .. new_path)
+
+        local result = api:run_command("mv", old_path, new_path)
+        if not result or not result.success then
+            return {
+                status_message = {
+                    level = "error",
+                    text = "[File Explorer] Failed to rename: " .. (result and result.stderr or "unknown error"),
+                }
+            }
+        end
+
+        return refresh_tree(api)
+
+    elseif action == "delete" then
+        local target_path, _ = reconstruct_path(api, node_path)
+        if not target_path then return {} end
+
+        api:log("File explorer: deleting " .. target_path)
+
+        local result = api:run_command("rm", "-rf", target_path)
+        if not result or not result.success then
+            return {
+                status_message = {
+                    level = "error",
+                    text = "[File Explorer] Failed to delete: " .. (result and result.stderr or "unknown error"),
+                }
+            }
+        end
+
+        return refresh_tree(api)
+
+    elseif action == "refresh" then
+        return refresh_tree(api)
     end
 
     return {}

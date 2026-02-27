@@ -484,6 +484,8 @@ end
 | `on_click` | No | Action name sent to `on_widget_action` when a node is activated |
 | `expand_depth` | No | Levels to auto-expand: 0 = none, -1 = all (default: 1) |
 | `click_mode` | No | `"single"` or `"double"` (default: `"double"`). Use `"single"` for YAML/JSON viewers, `"double"` for file explorers |
+| `context_path` | No | Base directory path used to resolve node paths for context menu actions (e.g., project root) |
+| `context_menu` | No | Array of context menu item tables (see [Context Menu Items](#context-menu-items) below) |
 
 **Each tree node supports:**
 
@@ -495,7 +497,7 @@ end
 | `children` | No | Array of child nodes (presence makes it a branch) |
 | `expanded` | No | Whether the node starts expanded (default: false) |
 
-The `on_widget_action` hook is called when the user activates a node (single-click or double-click depending on `click_mode`):
+The `on_widget_action` hook is called when the user activates a node (single-click or double-click depending on `click_mode`) or selects a context menu action:
 
 ```lua
 function M.on_widget_action(api, widget_type, action, session_id, data)
@@ -504,6 +506,100 @@ function M.on_widget_action(api, widget_type, action, session_id, data)
         -- e.g., {"src", "app", "state.rs"}
         local file = reconstruct_path(data.node_path)
         return { open_file = file }
+    end
+    return {}
+end
+```
+
+**`data` fields for tree view actions:**
+
+| Field | Description |
+|-------|-------------|
+| `data.node_path` | Array of labels from root to the clicked/right-clicked node |
+| `data.input_text` | User's input from an input dialog (only present for `input`-type context menu items) |
+
+#### Context Menu Items
+
+Plugins can define right-click context menus for tree view nodes. Each item specifies which node types it appears for and what happens when clicked.
+
+**Context menu item fields:**
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `label` | Yes | Display text (e.g., `"New File..."`, `"Delete"`) |
+| `action` | No* | Action name sent to `on_widget_action` (*required unless `clipboard = true`) |
+| `target` | No | Node type filter: `"folder"`, `"file"`, `"empty"`, `"all"` (default: `"all"`) |
+| `input` | No | If set, show an input dialog with this prompt before sending the action |
+| `confirm` | No | If set, show a confirmation dialog with this message before sending |
+| `prefill_name` | No | If `true`, pre-fill the input dialog with the current node name (for rename) |
+| `clipboard` | No | If `true`, copy the node's full path to clipboard (built-in, no action sent to plugin) |
+
+**Target types:**
+
+| Target | When shown |
+|--------|------------|
+| `"file"` | Right-click on a leaf node (file) |
+| `"folder"` | Right-click on a branch node (folder) |
+| `"empty"` | Right-click on empty area (no node) |
+| `"all"` | Always shown regardless of click target |
+
+**Three item behaviors:**
+
+1. **Plain action** — Click sends the action to the plugin immediately
+2. **Input action** (`input` field set) — Click shows an input dialog; user's text is sent as `data.input_text`
+3. **Confirm action** (`confirm` field set) — Click shows a confirmation dialog; action sent only if confirmed
+
+**Example:**
+
+```lua
+return {
+    tree_view = {
+        title = "Project Files",
+        root = root_node,
+        context_path = project_root,
+        on_click = "node_clicked",
+        context_menu = {
+            -- Folder items
+            { label = "New File...",   action = "new_file",   target = "folder", input = "New file name:" },
+            { label = "New Folder...", action = "new_folder", target = "folder", input = "New folder name:" },
+            { label = "Copy Path",    target = "folder", clipboard = true },
+            { label = "Rename...",    action = "rename",     target = "folder", input = "Rename to:", prefill_name = true },
+            { label = "Delete",       action = "delete",     target = "folder", confirm = "Delete this folder?" },
+
+            -- File items
+            { label = "Open",         action = "node_clicked", target = "file" },
+            { label = "Copy Path",    target = "file", clipboard = true },
+            { label = "Rename...",    action = "rename",     target = "file", input = "Rename to:", prefill_name = true },
+            { label = "Delete",       action = "delete",     target = "file", confirm = "Delete this file?" },
+
+            -- Empty area items
+            { label = "Refresh",      action = "refresh",    target = "empty" },
+        }
+    }
+}
+```
+
+**Handling context menu actions in `on_widget_action`:**
+
+```lua
+function M.on_widget_action(api, widget_type, action, session_id, data)
+    if widget_type == "tree_view" then
+        if action == "new_file" and data.input_text then
+            -- data.node_path = path segments to the right-clicked folder
+            -- data.input_text = user's input from the dialog
+            local parent = resolve_path(data.node_path)
+            api:run_command("touch", parent .. "/" .. data.input_text)
+            return refresh_tree()
+        elseif action == "rename" and data.input_text then
+            local old_path = resolve_path(data.node_path)
+            local new_path = parent_dir(old_path) .. "/" .. data.input_text
+            api:run_command("mv", old_path, new_path)
+            return refresh_tree()
+        elseif action == "delete" then
+            local target_path = resolve_path(data.node_path)
+            api:run_command("rm", "-rf", target_path)
+            return refresh_tree()
+        end
     end
     return {}
 end

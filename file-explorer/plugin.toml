@@ -1,9 +1,9 @@
 name = "file-explorer"
-version = "0.2.1"
+version = "0.3.0"
 description = "File explorer tree view for project directories"
 
 [permissions]
-execute = ["find", "test"]
+execute = ["find", "test", "touch", "mkdir", "mv", "rm"]
 
 [[menu_items]]
 label = "Show File Explorer"
