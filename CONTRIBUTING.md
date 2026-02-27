@@ -436,8 +436,9 @@ return {
                 { label = "lib.rs", icon = "file", data = "/path/to/lib.rs" }
             }
         },
-        expand_depth = 1,     -- levels to auto-expand (0 = none, -1 = all)
-        on_click = "node_clicked"  -- action name sent to on_widget_action
+        expand_depth = 1,          -- levels to auto-expand (0 = none, -1 = all)
+        on_click = "node_clicked", -- action name sent to on_widget_action
+        click_mode = "double"      -- "single" or "double" (default: "double")
     },
 
     -- Open File → Request FerrisPad to open a file in the editor
@@ -469,11 +470,22 @@ end
 
 ### 6. Tree View
 
-**Location**: Bottom panel, collapsible tree
+**Location**: Left/right/bottom panel (configurable in settings), collapsible tree
 
 **Purpose**: Show hierarchical data (file browsers, outlines, YAML viewers)
 
-Each tree node supports:
+**Tree view request fields:**
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `title` | No | Header title (default: "Tree View") |
+| `root` | Yes* | Root tree node (*or use `yaml_content`) |
+| `yaml_content` | No | YAML string to parse into a tree (alternative to `root`) |
+| `on_click` | No | Action name sent to `on_widget_action` when a node is activated |
+| `expand_depth` | No | Levels to auto-expand: 0 = none, -1 = all (default: 1) |
+| `click_mode` | No | `"single"` or `"double"` (default: `"double"`). Use `"single"` for YAML/JSON viewers, `"double"` for file explorers |
+
+**Each tree node supports:**
 
 | Field | Required | Description |
 |-------|----------|-------------|
@@ -483,7 +495,7 @@ Each tree node supports:
 | `children` | No | Array of child nodes (presence makes it a branch) |
 | `expanded` | No | Whether the node starts expanded (default: false) |
 
-The `on_widget_action` hook is called when the user clicks a node:
+The `on_widget_action` hook is called when the user activates a node (single-click or double-click depending on `click_mode`):
 
 ```lua
 function M.on_widget_action(api, widget_type, action, session_id, data)
