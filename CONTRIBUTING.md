@@ -6,6 +6,7 @@ Thank you for your interest in contributing to FerrisPad's plugin ecosystem!
 
 - [Plugin Structure](#plugin-structure)
 - [Plugin Configuration](#plugin-configuration)
+- [Filesystem API Reference](#filesystem-api-reference)
 - [UI Widgets Reference](#ui-widgets-reference)
 - [Linter Plugin Guidelines](#linter-plugin-guidelines)
 - [Diagnostic Format](#diagnostic-format)
@@ -36,13 +37,15 @@ version = "1.0.0"
 description = "Short description"
 
 [permissions]
-execute = ["tool1", "tool2"]  # Commands this plugin can run
+execute = ["tool1", "tool2"]  # Commands this plugin can run (only needed for run_command)
 
 [[menu_items]]
 label = "Run Tool"
 action = "run_tool"
 shortcut = "Ctrl+Shift+X"  # Optional
 ```
+
+> **Note**: The built-in filesystem API (`api:is_file()`, `api:list_dir()`, `api:scan_dir()`, `api:create_file()`, `api:create_dir()`, `api:rename()`, `api:remove()`) does **not** require `execute` permissions — these methods are sandboxed to the project root automatically. Only `api:run_command()` requires `execute` permissions.
 
 ---
 
@@ -192,6 +195,102 @@ end
 - **Document parameters**: Explain what each parameter does in your README
 - **Validate at runtime**: Handle invalid config values gracefully
 - **Keep it simple**: Only expose parameters that users actually need to change
+
+---
+
+## Filesystem API Reference
+
+FerrisPad provides a cross-platform filesystem API that plugins can use for file and directory operations. All methods are sandboxed to the project root directory via `security.rs` path validation — no `execute` permissions required.
+
+### Read Operations
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `api:file_exists(path)` | `bool` | Check if a path exists (file or directory) |
+| `api:is_file(path)` | `bool` | Check if a path is a regular file (not a directory) |
+| `api:list_dir(path)` | `table` or `nil` | List entries in a single directory (non-recursive) |
+| `api:scan_dir(path, max_depth?)` | `table` or `nil` | Recursively scan a directory tree |
+
+### Write Operations
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `api:create_file(path)` | `bool, string` | Create a new empty file (fails if file already exists) |
+| `api:create_dir(path)` | `bool, string` | Create a directory and all missing parents |
+| `api:rename(old, new)` | `bool, string` | Rename or move a file/directory |
+| `api:remove(path)` | `bool, string` | Remove a file or directory (recursive for directories) |
+
+### Return Conventions
+
+- **Read operations** return `nil` on failure (path outside project root, permission denied, etc.)
+- **Write operations** return `(true, "")` on success, `(false, "error message")` on failure
+- **Security violations** (path outside project root) return `nil` or `(false, "Path outside project root")` silently
+
+### `api:list_dir(path)`
+
+Returns an array of entries in a single directory:
+
+```lua
+local entries = api:list_dir(project_root)
+if entries then
+    for _, entry in ipairs(entries) do
+        print(entry.name, entry.is_dir)  -- "src" true, "main.rs" false
+    end
+end
+```
+
+### `api:scan_dir(path, max_depth?)`
+
+Recursively scans a directory tree. Default depth is 5, maximum is 10.
+
+```lua
+local entries = api:scan_dir(project_root, 3)
+if entries then
+    for _, entry in ipairs(entries) do
+        print(entry.name)      -- "main.rs"
+        print(entry.rel_path)  -- "src/main.rs" (relative to scanned path, always uses /)
+        print(entry.is_dir)    -- false
+    end
+end
+```
+
+### `api:create_file(path)`
+
+Creates a new empty file. Uses `create_new` semantics — **will not overwrite** existing files:
+
+```lua
+local ok, err = api:create_file("/project/src/new_file.rs")
+if not ok then
+    api:log("Failed: " .. err)  -- e.g., "File already exists"
+end
+```
+
+### `api:rename(old, new)`
+
+Both source and destination must be within the project root:
+
+```lua
+local ok, err = api:rename("/project/old_name.rs", "/project/new_name.rs")
+```
+
+### `api:remove(path)`
+
+Removes a file, or a directory and all its contents recursively:
+
+```lua
+local ok, err = api:remove("/project/temp_dir")  -- recursive for directories
+```
+
+### When to Use Filesystem API vs `run_command`
+
+| Need | Use |
+|------|-----|
+| List/scan files | `api:list_dir()`, `api:scan_dir()` |
+| Check if file exists | `api:file_exists()`, `api:is_file()` |
+| Create/rename/delete files | `api:create_file()`, `api:rename()`, `api:remove()` |
+| Run external tools (linters, formatters) | `api:run_command()` |
+
+Prefer the filesystem API over shelling out — it's cross-platform, faster, and doesn't require `execute` permissions.
 
 ---
 
@@ -596,16 +695,25 @@ function M.on_widget_action(api, widget_type, action, session_id, data)
             -- data.node_path = path segments to the right-clicked folder
             -- data.input_text = user's input from the dialog
             local parent = resolve_path(data.node_path)
-            api:run_command("touch", parent .. "/" .. data.input_text)
+            local ok, err = api:create_file(parent .. "/" .. data.input_text)
+            if not ok then
+                return { status_message = { level = "error", text = err } }
+            end
             return refresh_tree()
         elseif action == "rename" and data.input_text then
             local old_path = resolve_path(data.node_path)
             local new_path = parent_dir(old_path) .. "/" .. data.input_text
-            api:run_command("mv", old_path, new_path)
+            local ok, err = api:rename(old_path, new_path)
+            if not ok then
+                return { status_message = { level = "error", text = err } }
+            end
             return refresh_tree()
         elseif action == "delete" then
             local target_path = resolve_path(data.node_path)
-            api:run_command("rm", "-rf", target_path)
+            local ok, err = api:remove(target_path)
+            if not ok then
+                return { status_message = { level = "error", text = err } }
+            end
             return refresh_tree()
         end
     end

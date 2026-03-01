@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-02-27",
+  "updated": "2026-03-01",
   "plugins": [
     {
       "name": "python-lint",
@@ -12,10 +12,10 @@
       "tags": ["python", "linting", "ruff", "pyright"],
       "min_ferrispad_version": "0.9.1",
       "checksums": {
-        "init.lua": "sha256:58c6f1ca8bddb18f4cabf23da0faf0b3167299966947d51188bec3e6c85b387a",
+        "init.lua": "sha256:03f5d1108ea59acbd258a8fdef630fb98b6cb7e9e24f1dc31abe7cc107ecba4a",
         "plugin.toml": "sha256:bec1d6ecbc39dd8bba0a8c121da3e199439a1ac9fc0e94eb00275481b6316b60"
       },
-      "signature": "aaZ4PNx5o047lSzaQCBApLP0V+VlB7TheJTp37lTNKQtHUc8Jigj0KbfMpA0IB94nZIqiUSiuAeZcQAezBIFCA==",
+      "signature": "88szbrjUi4FGZCTmghI+2ezirSG1cf2cm/mBXj47Sm7IVY334Zozq+0476Kkpn77QkCDGefOYI9rzqwa8gewBw==",
       "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/python-lint/README.md"
     },
     {
@@ -28,26 +28,26 @@
       "tags": ["rust", "linting", "clippy", "cargo"],
       "min_ferrispad_version": "0.9.1",
       "checksums": {
-        "init.lua": "sha256:fbf6cb3ddb937e934d5d7d270f4296c5b82ddf803d7de45c15e169bf851a333e",
+        "init.lua": "sha256:d4c57f9889b16cc115577be186d0eef7cfc28eefc09ffc323adaf4c8c4158313",
         "plugin.toml": "sha256:ce34da00f80479a035096e118988c78141489ed100eea1136d5e56f172563863"
       },
-      "signature": "EhxotEO7dDvsQCBmYQoJc+lqnFG5kHFevn/HNllYho7uigiyXaWcBaCO3HPS+mPHH+dnoRV2X2XU2VUYHwYOAg==",
+      "signature": "lXYfU82udUL6Q0gHNkygQUiT/979LG4MikO3Aci9xmTnj8T4fBfwJPp/zzMQtNIrS8FDMiPtLQQz1prmw29UBA==",
       "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/rust-lint/README.md"
     },
     {
       "name": "file-explorer",
-      "version": "0.3.0",
-      "description": "File explorer tree view for project directories with plugin-defined context menus, file management (create/rename/delete), double-click-to-open, configurable position, hidden files toggle, and smart directory filtering",
+      "version": "0.4.0",
+      "description": "Cross-platform file explorer tree view with native filesystem API, context menus, file management (create/rename/delete), configurable position, hidden files toggle, and smart directory filtering",
       "path": "file-explorer/",
       "author": "Federico Conticello",
       "license": "MIT",
       "tags": ["file-explorer", "tree-view", "navigation"],
       "min_ferrispad_version": "0.9.1",
       "checksums": {
-        "init.lua": "sha256:3db5783cfebca24739a841fd990fbc614e90b52baf8cc3c3e8e4a4f17fc63e25",
-        "plugin.toml": "sha256:e92c6d3c2b224c96f54e0d4557d257f8b5661af7a02f627bcf958b5474fd2c47"
+        "init.lua": "sha256:63569172afd197557c0b1acb8be64c2d92869111ba919d123e89bda7193b3431",
+        "plugin.toml": "sha256:d2cb04b920af3d8dbc2aa0ba7388bc93246514d27c63f5b0dd4cb0fa576ffae7"
       },
-      "signature": "RT0gbJQCtQzLCJ83IoY4H9C1WNsYclZei7ZialokSU2rFa4AWBTHCiLJ9tQrRbaKBoWFmhflAsqBuuL/ysulDw==",
+      "signature": "gwU9PHLp3EcEivaH7+MoGa41JlfFx3sXlMloh9HysuGO1yoMsVuwEEEA56EqY/trhZ/2pNyhTyFfFHF/i1CoAg==",
       "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/file-explorer/README.md"
     },
     {

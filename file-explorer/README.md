@@ -15,9 +15,7 @@ Browse your project directory as a tree view directly in FerrisPad.
 
 ## Requirements
 
-The following commands must be available (pre-installed on Linux and macOS):
-- `find`, `test` — directory scanning and file type detection
-- `touch`, `mkdir`, `mv`, `rm` — file management (create, rename, delete)
+No external commands required. All filesystem operations use FerrisPad's built-in cross-platform API (works on Linux, macOS, and Windows).
 
 ## Installation
 
@@ -63,8 +61,8 @@ Access plugin settings via **Plugins > file-explorer > Settings...** in FerrisPa
 ### How It Works
 
 1. The plugin detects the project root from the current document (uses `.git`, `Cargo.toml`, `package.json`, etc. as markers)
-2. Runs `find` with a max depth of 5 levels to list files and directories
-3. Filters out noise directories and (optionally) hidden files
+2. Uses `api:scan_dir()` (native Rust) with a max depth of 5 levels to list files and directories
+3. Filters out noise directories and (optionally) hidden files in Lua
 4. Builds a nested tree: folders first (alphabetical), then files (alphabetical)
 5. Displays the tree in FerrisPad's tree view panel
 
@@ -116,5 +114,5 @@ These file types are excluded:
 
 ## Version
 
-- Plugin version: 0.3.0
+- Plugin version: 0.4.0
 - Requires FerrisPad 0.9.1+

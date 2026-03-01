@@ -1,7 +1,8 @@
--- File Explorer Plugin for FerrisPad v0.1.0
+-- File Explorer Plugin for FerrisPad v0.4.0
+-- Uses native cross-platform filesystem API (no shell commands)
 local M = {
     name = "file-explorer",
-    version = "0.1.0",
+    version = "0.4.0",
     description = "File explorer tree view for project directories"
 }
 
@@ -22,165 +23,27 @@ local SKIP_DIRS = {
     [".cache"] = true,
 }
 
+-- File extensions to skip (compiled/binary artifacts)
+local SKIP_EXTENSIONS = {
+    ["pyc"] = true,
+    ["o"] = true,
+    ["so"] = true,
+}
+
 -- Check if a name is hidden (starts with .)
 local function is_hidden(name)
     return name:sub(1, 1) == "."
+end
+
+-- Get file extension from name
+local function get_extension(name)
+    return name:match("%.([^%.]+)$")
 end
 
 -- Read boolean config
 local function show_hidden(api)
     local val = api:get_config("show_hidden_files")
     return val == "true" or val == true
-end
-
--- Build tree nodes from find output
--- find outputs paths like: ./src/main.rs, ./Cargo.toml, ./src/app/state.rs
-local function parse_find_output(output, project_root, include_hidden)
-    -- Collect all entries: { path = relative_path, is_dir = bool, name = basename }
-    local entries = {}
-
-    for line in output:gmatch("[^\r\n]+") do
-        -- Strip leading ./ prefix
-        local rel = line:gsub("^%./", "")
-        if rel ~= "" and rel ~= "." then
-            -- Determine if it's a directory by checking if it ends with /
-            -- (find -type d outputs without /, but we check via path structure)
-            local name = rel:match("([^/]+)/?$") or rel
-            local parent = rel:match("^(.+)/[^/]+$") or ""
-
-            -- Skip noise directories
-            if not SKIP_DIRS[name] then
-                -- Skip hidden files/dirs unless configured
-                local dominated_by_hidden = false
-                if not include_hidden then
-                    -- Check if any path component is hidden
-                    for component in rel:gmatch("[^/]+") do
-                        if is_hidden(component) then
-                            dominated_by_hidden = true
-                            break
-                        end
-                    end
-                end
-
-                if not dominated_by_hidden then
-                    table.insert(entries, {
-                        path = rel,
-                        parent = parent,
-                        name = name,
-                    })
-                end
-            end
-        end
-    end
-
-    return entries
-end
-
--- Build a nested tree structure from flat path entries
-local function build_tree(entries, project_root)
-    -- First pass: identify directories (any path that is a prefix of another)
-    local dir_set = {}
-    for _, entry in ipairs(entries) do
-        -- Mark all parent directories
-        local parts = {}
-        for part in entry.path:gmatch("[^/]+") do
-            table.insert(parts, part)
-            if #parts < #entry.path:gsub("[^/]", "") + 1 then
-                -- This is an intermediate component
-                local dir_path = table.concat(parts, "/")
-                dir_set[dir_path] = true
-            end
-        end
-    end
-
-    -- Separate into directories and files
-    local dirs = {}
-    local files = {}
-    for _, entry in ipairs(entries) do
-        if dir_set[entry.path] then
-            table.insert(dirs, entry)
-        else
-            table.insert(files, entry)
-        end
-    end
-
-    -- Sort: dirs first (alphabetical), then files (alphabetical)
-    table.sort(dirs, function(a, b) return a.path < b.path end)
-    table.sort(files, function(a, b) return a.path < b.path end)
-
-    -- Build tree nodes recursively
-    -- tree_view format: { title, children = { {label, children, icon, ...}, ... } }
-    local root_children = {}
-
-    -- Helper: find or create a directory node at a given path
-    local node_map = {} -- path -> node table
-
-    local function get_or_create_dir(dir_path)
-        if node_map[dir_path] then
-            return node_map[dir_path]
-        end
-
-        local name = dir_path:match("([^/]+)$") or dir_path
-        local node = {
-            label = name,
-            icon = "folder",
-            children = {},
-        }
-        node_map[dir_path] = node
-
-        -- Find parent
-        local parent_path = dir_path:match("^(.+)/[^/]+$")
-        if parent_path then
-            local parent_node = get_or_create_dir(parent_path)
-            table.insert(parent_node.children, node)
-        else
-            table.insert(root_children, node)
-        end
-
-        return node
-    end
-
-    -- Create all directory nodes
-    for _, dir in ipairs(dirs) do
-        get_or_create_dir(dir.path)
-    end
-
-    -- Add files to their parent directory nodes
-    for _, file in ipairs(files) do
-        local file_node = {
-            label = file.name,
-            icon = "file",
-            data = project_root .. "/" .. file.path,
-        }
-
-        if file.parent ~= "" then
-            local parent_node = get_or_create_dir(file.parent)
-            table.insert(parent_node.children, file_node)
-        else
-            table.insert(root_children, file_node)
-        end
-    end
-
-    -- Sort children within each directory: folders first, then files, alphabetical
-    local function sort_children(children)
-        table.sort(children, function(a, b)
-            local a_is_dir = a.children ~= nil and #a.children > 0 or a.icon == "folder"
-            local b_is_dir = b.children ~= nil and #b.children > 0 or b.icon == "folder"
-            if a_is_dir ~= b_is_dir then
-                return a_is_dir
-            end
-            return a.label < b.label
-        end)
-        for _, child in ipairs(children) do
-            if child.children then
-                sort_children(child.children)
-            end
-        end
-    end
-
-    sort_children(root_children)
-
-    return root_children
 end
 
 -- Scan project directory and build tree view data
@@ -192,110 +55,48 @@ local function scan_project(api)
 
     local include_hidden = show_hidden(api)
 
-    -- Use find to list all files and directories (maxdepth 5 to avoid huge trees)
-    -- Uses -type f and -type d separately to distinguish files from directories,
-    -- avoiding -printf which requires \n (blocked by security validation)
-    local result_files = api:run_command("find", project_root,
-        "-maxdepth", "5",
-        "-type", "f",
-        "-not", "-path", project_root .. "/.git/*",
-        "-not", "-path", project_root .. "/node_modules/*",
-        "-not", "-path", project_root .. "/target/*",
-        "-not", "-path", project_root .. "/__pycache__/*",
-        "-not", "-path", project_root .. "/.venv/*",
-        "-not", "-path", project_root .. "/.mypy_cache/*",
-        "-not", "-path", project_root .. "/.pytest_cache/*",
-        "-not", "-name", "*.pyc",
-        "-not", "-name", "*.o",
-        "-not", "-name", "*.so"
-    )
-
-    local result_dirs = api:run_command("find", project_root,
-        "-mindepth", "1",
-        "-maxdepth", "5",
-        "-type", "d",
-        "-not", "-path", project_root .. "/.git/*",
-        "-not", "-path", project_root .. "/.git",
-        "-not", "-path", project_root .. "/node_modules/*",
-        "-not", "-path", project_root .. "/node_modules",
-        "-not", "-path", project_root .. "/target/*",
-        "-not", "-path", project_root .. "/target",
-        "-not", "-path", project_root .. "/__pycache__/*",
-        "-not", "-path", project_root .. "/__pycache__",
-        "-not", "-path", project_root .. "/.venv/*",
-        "-not", "-path", project_root .. "/.venv",
-        "-not", "-path", project_root .. "/.mypy_cache/*",
-        "-not", "-path", project_root .. "/.mypy_cache",
-        "-not", "-path", project_root .. "/.pytest_cache/*",
-        "-not", "-path", project_root .. "/.pytest_cache"
-    )
-
-    if (not result_files or not result_files.stdout) and (not result_dirs or not result_dirs.stdout) then
+    -- Use native scan_dir API (cross-platform, no shell commands)
+    local raw_entries = api:scan_dir(project_root, 5)
+    if not raw_entries then
         return nil, "Failed to scan project directory"
     end
 
-    -- Helper: convert absolute path to relative and filter
-    local prefix = project_root .. "/"
-    local prefix_len = #prefix
+    -- Filter entries
+    local entries = {}
+    for _, entry in ipairs(raw_entries) do
+        local dominated_by_skip = false
+        local dominated_by_hidden = false
 
-    local function parse_paths(output, is_dir)
-        local result = {}
-        if not output then return result end
-        for line in output:gmatch("[^\r\n]+") do
-            -- Strip project root prefix to get relative path
-            local rel_path
-            if line:sub(1, prefix_len) == prefix then
-                rel_path = line:sub(prefix_len + 1)
-            else
-                rel_path = line
+        -- Check each path component for skip dirs and hidden dirs
+        for component in entry.rel_path:gmatch("[^/]+") do
+            if SKIP_DIRS[component] then
+                dominated_by_skip = true
+                break
             end
-
-            if rel_path and rel_path ~= "" then
-                local name = rel_path:match("([^/]+)$") or rel_path
-                local parent = rel_path:match("^(.+)/[^/]+$") or ""
-
-                -- Skip noise directories
-                local dominated_by_skip = false
-                for component in rel_path:gmatch("[^/]+") do
-                    if SKIP_DIRS[component] then
-                        dominated_by_skip = true
-                        break
-                    end
-                end
-
-                -- Skip hidden files/dirs unless configured
-                local dominated_by_hidden = false
-                if not include_hidden then
-                    for component in rel_path:gmatch("[^/]+") do
-                        if is_hidden(component) then
-                            dominated_by_hidden = true
-                            break
-                        end
-                    end
-                end
-
-                if not dominated_by_skip and not dominated_by_hidden then
-                    table.insert(result, {
-                        path = rel_path,
-                        parent = parent,
-                        name = name,
-                        is_dir = is_dir,
-                    })
-                end
+            if not include_hidden and is_hidden(component) then
+                dominated_by_hidden = true
+                break
             end
         end
-        return result
+
+        -- Skip binary artifact extensions for files
+        local skip_ext = false
+        if not entry.is_dir then
+            local ext = get_extension(entry.name)
+            if ext and SKIP_EXTENSIONS[ext] then
+                skip_ext = true
+            end
+        end
+
+        if not dominated_by_skip and not dominated_by_hidden and not skip_ext then
+            table.insert(entries, {
+                path = entry.rel_path,
+                parent = entry.rel_path:match("^(.+)/[^/]+$") or "",
+                name = entry.name,
+                is_dir = entry.is_dir,
+            })
+        end
     end
-
-    local entries = {}
-    local dir_entries = parse_paths(result_dirs and result_dirs.stdout, true)
-    local file_entries = parse_paths(result_files and result_files.stdout, false)
-    for _, e in ipairs(dir_entries) do table.insert(entries, e) end
-    for _, e in ipairs(file_entries) do table.insert(entries, e) end
-
-    -- Build tree structure
-    local root_children = {}
-    local node_map = {}
 
     -- Sort: directories first, then files, all alphabetical
     table.sort(entries, function(a, b)
@@ -304,6 +105,10 @@ local function scan_project(api)
         end
         return a.path < b.path
     end)
+
+    -- Build tree structure
+    local root_children = {}
+    local node_map = {}
 
     local function get_or_create_dir(dir_path, dir_name)
         if node_map[dir_path] then
@@ -369,7 +174,7 @@ local function scan_project(api)
     sort_children(root_children)
 
     -- Get project directory name for title
-    local project_name = project_root:match("([^/]+)$") or "Project"
+    local project_name = project_root:match("([^/\\]+)$") or "Project"
 
     return {
         title = project_name,
@@ -470,13 +275,10 @@ function M.on_widget_action(api, widget_type, action, session_id, data)
 
         api:log("File explorer: trying path: " .. full_path)
 
-        -- Check if it's an existing file (not a directory) and open it
-        if api:file_exists(full_path) then
-            local check = api:run_command("test", "-f", full_path)
-            if check and check.success then
-                api:log("File explorer: opening " .. full_path)
-                return { open_file = full_path }
-            end
+        -- Check if it's a regular file (not a directory) and open it
+        if api:is_file(full_path) then
+            api:log("File explorer: opening " .. full_path)
+            return { open_file = full_path }
         end
 
     elseif action == "new_file" then
@@ -489,12 +291,12 @@ function M.on_widget_action(api, widget_type, action, session_id, data)
         local new_path = parent_path .. "/" .. input_text
         api:log("File explorer: creating file " .. new_path)
 
-        local result = api:run_command("touch", new_path)
-        if not result or not result.success then
+        local ok, err = api:create_file(new_path)
+        if not ok then
             return {
                 status_message = {
                     level = "error",
-                    text = "[File Explorer] Failed to create file: " .. input_text,
+                    text = "[File Explorer] Failed to create file: " .. (err or input_text),
                 }
             }
         end
@@ -513,12 +315,12 @@ function M.on_widget_action(api, widget_type, action, session_id, data)
         local new_path = parent_path .. "/" .. input_text
         api:log("File explorer: creating folder " .. new_path)
 
-        local result = api:run_command("mkdir", "-p", new_path)
-        if not result or not result.success then
+        local ok, err = api:create_dir(new_path)
+        if not ok then
             return {
                 status_message = {
                     level = "error",
-                    text = "[File Explorer] Failed to create folder: " .. input_text,
+                    text = "[File Explorer] Failed to create folder: " .. (err or input_text),
                 }
             }
         end
@@ -537,12 +339,12 @@ function M.on_widget_action(api, widget_type, action, session_id, data)
         local new_path = parent_dir .. "/" .. input_text
         api:log("File explorer: renaming " .. old_path .. " -> " .. new_path)
 
-        local result = api:run_command("mv", old_path, new_path)
-        if not result or not result.success then
+        local ok, err = api:rename(old_path, new_path)
+        if not ok then
             return {
                 status_message = {
                     level = "error",
-                    text = "[File Explorer] Failed to rename: " .. (result and result.stderr or "unknown error"),
+                    text = "[File Explorer] Failed to rename: " .. (err or "unknown error"),
                 }
             }
         end
@@ -555,12 +357,12 @@ function M.on_widget_action(api, widget_type, action, session_id, data)
 
         api:log("File explorer: deleting " .. target_path)
 
-        local result = api:run_command("rm", "-rf", target_path)
-        if not result or not result.success then
+        local ok, err = api:remove(target_path)
+        if not ok then
             return {
                 status_message = {
                     level = "error",
-                    text = "[File Explorer] Failed to delete: " .. (result and result.stderr or "unknown error"),
+                    text = "[File Explorer] Failed to delete: " .. (err or "unknown error"),
                 }
             }
         end

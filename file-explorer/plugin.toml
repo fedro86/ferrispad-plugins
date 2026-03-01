@@ -1,9 +1,9 @@
 name = "file-explorer"
-version = "0.3.0"
+version = "0.4.0"
 description = "File explorer tree view for project directories"
 
 [permissions]
-execute = ["find", "test", "touch", "mkdir", "mv", "rm"]
+# No execute permissions needed — uses native filesystem API
 
 [[menu_items]]
 label = "Show File Explorer"

@@ -5,6 +5,17 @@ All notable changes to the File Explorer plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-03-01
+
+### Changed
+- **Cross-platform filesystem API**: Replaced all shell commands (`find`, `test`, `touch`, `mkdir`, `mv`, `rm`) with native Rust-backed API methods (`scan_dir`, `is_file`, `create_file`, `create_dir`, `rename`, `remove`)
+- **No execute permissions needed**: Removed `[permissions] execute` from plugin.toml — all filesystem operations now use the sandboxed built-in API
+- **Windows support**: Plugin now works on Windows, macOS, and Linux without any external commands
+
+### Removed
+- Dependency on Unix commands: `find`, `test`, `touch`, `mkdir`, `mv`, `rm`
+- `parse_find_output` function (no longer needed)
+
 ## [0.3.0] - 2026-02-27
 
 ### Added
