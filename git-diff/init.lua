@@ -149,7 +149,7 @@ function M.on_widget_action(api, widget_type, action, session_id, data)
 
     if action == "accept" then
         -- Revert: find cached HEAD content for the current file
-        local path = api:get_path()
+        local path = api:get_file_path()
         if path and head_cache[path] then
             local content = head_cache[path]
             head_cache[path] = nil
@@ -157,7 +157,7 @@ function M.on_widget_action(api, widget_type, action, session_id, data)
         end
     elseif action == "reject" then
         -- Close: clean up cache
-        local path = api:get_path()
+        local path = api:get_file_path()
         if path then
             head_cache[path] = nil
         end
