@@ -574,6 +574,10 @@ end
 
 **Highlight colors**: `"added"` (green), `"removed"` (red), `"modified"` (yellow)
 
+**Automatic behavior** (no plugin action required):
+- **Syntax highlighting**: FerrisPad automatically applies syntax coloring to split view pane content based on the active document's language. Syntax foreground colors are combined with diff background colors, so keywords, strings, and types remain visually distinct even on colored diff lines.
+- **Font matching**: In tab mode (`display_mode = "tab"`), the split view uses the user's editor font and size. In panel mode it uses a compact monospace font.
+
 ### 6. Tree View
 
 **Location**: Left/right/bottom panel (configurable in settings), collapsible tree
