@@ -65,6 +65,22 @@
       },
       "signature": "oRLZ2D6mjZ/PItiXv9mlHRmoYGE0LjsEJJ3xMBKB3DERaHOFjUzMFTBza7Zf9KMjX8/4zPMZxQZ2YKaOmcPODQ==",
       "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/yaml-json-viewer/README.md"
+    },
+    {
+      "name": "git-diff",
+      "version": "1.0.0",
+      "description": "Show git diff in a split view with revert capability",
+      "path": "git-diff/",
+      "author": "Federico Conticello",
+      "license": "MIT",
+      "tags": ["git", "diff", "split-view"],
+      "min_ferrispad_version": "0.9.1",
+      "checksums": {
+        "init.lua": "sha256:c9e29464a9559972d6fb58488021ca48e9e9ec47bdc1f628395c47dd6e5bfc33",
+        "plugin.toml": "sha256:c8e35db6134105ad6467eadfc1e92a1ee30d36e257adb03861ef11872c453170"
+      },
+      "signature": "DA7M2bzRI73By4kcE98wdKNGvjaUOwZY/1t5ujyOK/IFa6IUtjnLohyEHymd3r1CogzbFkGuLLj4T+T2/r0yDA==",
+      "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/git-diff/README.md"
     }
   ]
 }
