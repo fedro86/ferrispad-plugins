@@ -1,10 +1,14 @@
--- File Explorer Plugin for FerrisPad v0.4.0
+-- File Explorer Plugin for FerrisPad v0.5.0
 -- Uses native cross-platform filesystem API (no shell commands)
+-- Git status indicators: modified (amber), added/untracked (green), conflict (red)
 local M = {
     name = "file-explorer",
-    version = "0.4.0",
+    version = "0.5.0",
     description = "File explorer tree view for project directories"
 }
+
+-- Whether the tree panel is currently shown (for on_document_lint refresh)
+local tree_shown = false
 
 -- Directories to always skip
 local SKIP_DIRS = {
@@ -30,6 +34,26 @@ local SKIP_EXTENSIONS = {
     ["so"] = true,
 }
 
+-- Map git status codes to semantic label_color values
+local STATUS_COLORS = {
+    ["M"]  = "modified",
+    ["MM"] = "modified",
+    ["A"]  = "added",
+    ["AM"] = "added",
+    ["??"] = "untracked",
+    ["UU"] = "conflict",
+    ["D"]  = "modified",
+    ["R"]  = "modified",
+}
+
+-- Priority for folder status propagation (higher = more important)
+local COLOR_PRIORITY = {
+    untracked = 1,
+    added = 2,
+    modified = 3,
+    conflict = 4,
+}
+
 -- Check if a name is hidden (starts with .)
 local function is_hidden(name)
     return name:sub(1, 1) == "."
@@ -44,6 +68,40 @@ end
 local function show_hidden(api)
     local val = api:get_config("show_hidden_files")
     return val == "true" or val == true
+end
+
+-- Apply git status colors to tree nodes and propagate to parent folders.
+-- Returns the highest-priority color found in this subtree (for propagation).
+local function apply_git_colors(node, git_lookup)
+    local max_color = nil
+    local max_priority = 0
+
+    -- Apply color to file nodes
+    if not node.children then
+        local color = git_lookup[node.data]
+        if color then
+            node.label_color = color
+            return color
+        end
+        return nil
+    end
+
+    -- Recurse into children and propagate highest priority color
+    for _, child in ipairs(node.children) do
+        local child_color = apply_git_colors(child, git_lookup)
+        if child_color then
+            local p = COLOR_PRIORITY[child_color] or 0
+            if p > max_priority then
+                max_priority = p
+                max_color = child_color
+            end
+        end
+    end
+
+    if max_color then
+        node.label_color = max_color
+    end
+    return max_color
 end
 
 -- Scan project directory and build tree view data
@@ -176,14 +234,31 @@ local function scan_project(api)
     -- Get project directory name for title
     local project_name = project_root:match("([^/\\]+)$") or "Project"
 
+    local root_node = {
+        label = project_name,
+        icon = "folder",
+        expanded = true,
+        children = root_children,
+    }
+
+    -- Query git status and apply colors
+    local git_statuses = api:git_status(project_root)
+    if git_statuses then
+        -- Build lookup: full_path -> semantic color name
+        local git_lookup = {}
+        for rel_path, status_code in pairs(git_statuses) do
+            local color = STATUS_COLORS[status_code]
+            if color then
+                git_lookup[project_root .. "/" .. rel_path] = color
+            end
+        end
+        -- Walk tree and apply colors; propagate to folders
+        apply_git_colors(root_node, git_lookup)
+    end
+
     return {
         title = project_name,
-        root = {
-            label = project_name,
-            icon = "folder",
-            expanded = true,
-            children = root_children,
-        },
+        root = root_node,
         context_path = project_root,
         context_menu = {
             -- Folder items
@@ -249,12 +324,20 @@ function M.on_menu_action(api, action, path, content)
         -- Add on_click handler so tree node clicks trigger on_widget_action
         tree_data.on_click = "open_file"
 
+        tree_shown = true
+
         return {
             tree_view = tree_data
         }
     end
 
     return {}
+end
+
+-- Handle document lint results (fires after save — refresh tree with updated git status)
+function M.on_document_lint(api, path, content)
+    if not tree_shown then return nil end
+    return refresh_tree(api)
 end
 
 -- Handle widget interactions (tree view node clicks and context actions)
@@ -363,6 +446,39 @@ function M.on_widget_action(api, widget_type, action, session_id, data)
                 status_message = {
                     level = "error",
                     text = "[File Explorer] Failed to delete: " .. (err or "unknown error"),
+                }
+            }
+        end
+
+        return refresh_tree(api)
+
+    elseif action == "move" then
+        if #node_path == 0 then return {} end
+        local target_path_parts = data.target_path or {}
+
+        local source_path, project_root = reconstruct_path(api, node_path)
+        local target_dir, _ = reconstruct_path(api, target_path_parts)
+        if not source_path or not target_dir then return {} end
+
+        -- If target is a file, use its parent directory
+        if api:is_file(target_dir) then
+            target_dir = target_dir:match("^(.+)/[^/]+$") or project_root
+        end
+
+        -- Build new path: target_dir + source filename
+        local source_name = source_path:match("([^/]+)$")
+        local new_path = target_dir .. "/" .. source_name
+
+        if source_path == new_path then return {} end
+
+        api:log("File explorer: move source=" .. source_path .. " target_dir=" .. target_dir .. " new_path=" .. new_path)
+
+        local ok, err = api:rename(source_path, new_path)
+        if not ok then
+            return {
+                status_message = {
+                    level = "error",
+                    text = "[File Explorer] Failed to move: " .. (err or "unknown error"),
                 }
             }
         end
