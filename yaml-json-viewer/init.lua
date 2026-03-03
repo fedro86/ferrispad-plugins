@@ -111,6 +111,29 @@ function M.on_menu_action(api, action, path, content)
     return build_tree_result(api, path, content)
 end
 
+-- Strip type indicator suffixes: "key {3}" → "key", "key [5]" → "key"
+-- Also handles array index labels: "0 {4}" → "[0]", "12 [3]" → "[12]"
+local function strip_type_suffix(segment)
+    -- Strip " {N}" or " [N]" suffix
+    local stripped = segment:match("^(.-)%s+[%{%[]%d+[%}%]]$") or segment
+    return stripped
+end
+
+-- Extract the semantic key from a node_path segment.
+-- Handles: "key: value" → "key", "key {3}" → "key", "[0]: value" → "[0]",
+-- "0 {4}" → "[0]" (array index with children)
+local function extract_key(segment)
+    -- First strip type suffix
+    local s = strip_type_suffix(segment)
+    -- "key: value" → "key"
+    local key = s:match("^([^:]+):%s") or s
+    -- Bare number from array index with children: "0" → "[0]"
+    if key:match("^%d+$") then
+        key = "[" .. key .. "]"
+    end
+    return key
+end
+
 --- Called when user interacts with a tree node (click or context menu).
 function M.on_widget_action(api, widget_type, action, session_id, data)
     if widget_type ~= "tree_view" then return nil end
@@ -123,7 +146,7 @@ function M.on_widget_action(api, widget_type, action, session_id, data)
         local last = node_path[#node_path]
         local value = last:match("^[^:]+:%s*(.+)$")
         if not value then
-            value = last  -- Leaf node without ": " separator
+            value = strip_type_suffix(last)
         end
         return { clipboard_text = value }
 
@@ -131,20 +154,13 @@ function M.on_widget_action(api, widget_type, action, session_id, data)
         -- Build dot-separated key path from node_path segments
         local keys = {}
         for _, segment in ipairs(node_path) do
-            -- Extract key portion before ": "
-            local key = segment:match("^([^:]+):%s") or segment
-            keys[#keys + 1] = key
+            keys[#keys + 1] = extract_key(segment)
         end
         return { clipboard_text = table.concat(keys, ".") }
 
     elseif action == "node_clicked" then
         -- Navigate to the line in the editor where this key appears.
-        -- Uses the full node_path to disambiguate duplicate keys at different
-        -- nesting levels (e.g., two "name:" keys under different parents).
         local text = api:get_text()
-        -- DEBUG: click-to-line chain
-        print(string.format("[debug:click:lua] got text=%s, len=%d",
-            text and "yes" or "NO", text and #text or 0))
         if not text then return nil end
 
         -- Escape Lua pattern special characters in a key
@@ -169,36 +185,26 @@ function M.on_widget_action(api, widget_type, action, session_id, data)
         -- Extract segments from full path (keys and array indices)
         local segments = {}
         for _, segment in ipairs(node_path) do
-            local key = segment:match("^([^:]+):%s") or segment
-            segments[#segments + 1] = key
+            segments[#segments + 1] = extract_key(segment)
         end
         if #segments == 0 then return nil end
 
-        -- DEBUG: click-to-line chain
-        print(string.format("[debug:click:lua] segments=%s",
-            table.concat(segments, " > ")))
-
         -- Sequential position tracker: walk segments, advancing pos
-        local pos = 1  -- current line position in the document
+        local pos = 1
 
         for _, segment in ipairs(segments) do
             local idx = segment:match("^%[(%d+)%]$")
 
             if idx then
                 -- Array index: find the (idx+1)th list-item marker ("- ")
-                -- scoped to the indentation level of the first dash found
                 idx = tonumber(idx)
                 local count = -1
                 local target_indent = nil
                 for i = pos, #lines do
                     local indent = lines[i]:match("^(%s*)%-")
                     if indent then
-                        -- If we already set a target indent and this line is
-                        -- less indented, we've left the array scope
                         if target_indent and #indent < target_indent then break end
-                        -- First dash sets the target indentation
                         if not target_indent then target_indent = #indent end
-                        -- Only count dashes at exactly this indent level
                         if #indent == target_indent then
                             count = count + 1
                             if count == idx then
@@ -208,7 +214,6 @@ function M.on_widget_action(api, widget_type, action, session_id, data)
                         end
                     end
                 end
-                print(string.format("[debug:click:lua] array [%d] -> line %d", idx, pos))
             else
                 -- Regular key: find next occurrence at or after pos
                 for i = pos, #lines do
@@ -217,12 +222,16 @@ function M.on_widget_action(api, widget_type, action, session_id, data)
                         break
                     end
                 end
-                print(string.format("[debug:click:lua] key '%s' -> line %d", segment, pos))
             end
         end
 
-        print(string.format("[debug:click:lua] FINAL goto_line=%d", pos))
         return { goto_line = pos }
+
+    elseif action == "move" then
+        -- Reorder: move node_path item to target_path position
+        -- For structured data, this would mean reordering keys/elements
+        -- Currently a no-op; plugins can implement YAML/JSON rewriting later
+        return {}
     end
 
     return nil
