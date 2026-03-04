@@ -1,0 +1,62 @@
+name: Auto-sign plugins
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '*/init.lua'
+      - '*/plugin.toml'
+
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            tools/signer/target
+          key: signer-${{ hashFiles('tools/signer/Cargo.lock') }}
+          restore-keys: signer-
+
+      - name: Build plugin-signer
+        run: cargo build --release --manifest-path tools/signer/Cargo.toml
+
+      - name: Decode signing key
+        run: |
+          KEY_DIR=$(mktemp -d)
+          echo "${{ secrets.PLUGIN_SIGNING_KEY_B64 }}" | base64 -d > "$KEY_DIR/plugin_signing_key.bin"
+          chmod 600 "$KEY_DIR/plugin_signing_key.bin"
+          echo "SIGNING_KEY_PATH=$KEY_DIR" >> "$GITHUB_ENV"
+          echo "KEY_DIR=$KEY_DIR" >> "$GITHUB_ENV"
+
+      - name: Sign all plugins
+        run: ./tools/signer/target/release/plugin-signer update-all
+
+      - name: Wipe signing key
+        if: always()
+        run: |
+          if [ -n "$KEY_DIR" ] && [ -d "$KEY_DIR" ]; then
+            shred -u "$KEY_DIR/plugin_signing_key.bin" 2>/dev/null || rm -f "$KEY_DIR/plugin_signing_key.bin"
+            rmdir "$KEY_DIR"
+          fi
+
+      - name: Commit updated plugins.json
+        run: |
+          if git diff --quiet plugins.json; then
+            echo "No changes to plugins.json"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add plugins.json
+          git commit -m "chore: auto-sign plugins [skip ci]"
+          git push

@@ -1,86 +1,109 @@
 {
-  "version": 1,
-  "updated": "2026-03-04",
   "plugins": [
     {
-      "name": "python-lint",
-      "version": "2.7.0",
-      "description": "Python linting with ruff and pyright, supports project venv detection, lint-on-save toggle, and configurable tool arguments with dropdown presets",
-      "path": "python-lint/",
       "author": "Federico Conticello",
-      "license": "MIT",
-      "tags": ["python", "linting", "ruff", "pyright"],
-      "min_ferrispad_version": "0.9.1",
       "checksums": {
         "init.lua": "sha256:a487368ef0e9afe37319056ba8218d1f5958e677cb23b7ae78ec5649c4fa24f1",
         "plugin.toml": "sha256:06a2c351990c2adaeae0c8c83f8e68488bdef850685a04a08990b5f449ac5568"
       },
+      "description": "Python linting with ruff and pyright, supports project venv detection, lint-on-save toggle, and configurable tool arguments with dropdown presets",
+      "license": "MIT",
+      "min_ferrispad_version": "0.9.1",
+      "name": "python-lint",
+      "path": "python-lint/",
+      "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/python-lint/README.md",
       "signature": "WiCc/BXwjx9xYLvGQRkzROru199WzClmrO+Fb9T07roXFlrSM3rYJERWZx9BKDtP0YUUSQmYVmNiZMNiVF++Dw==",
-      "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/python-lint/README.md"
+      "tags": [
+        "python",
+        "linting",
+        "ruff",
+        "pyright"
+      ],
+      "version": "2.7.0"
     },
     {
-      "name": "rust-lint",
-      "version": "1.5.0",
-      "description": "Rust linting with clippy and cargo build, individual toggles for each tool, lint-on-save toggle, and configurable arguments with dropdown presets",
-      "path": "rust-lint/",
       "author": "Federico Conticello",
-      "license": "MIT",
-      "tags": ["rust", "linting", "clippy", "cargo"],
-      "min_ferrispad_version": "0.9.1",
       "checksums": {
         "init.lua": "sha256:0ce63e3ee8ad217fbba065ba8e43a89be40e8bd608198502105872ddb9545810",
         "plugin.toml": "sha256:5002148250967d2e24b50f45a0614a39bc4913146e03b81b99770e4c35a65f31"
       },
+      "description": "Rust linting with clippy and cargo build, individual toggles for each tool, lint-on-save toggle, and configurable arguments with dropdown presets",
+      "license": "MIT",
+      "min_ferrispad_version": "0.9.1",
+      "name": "rust-lint",
+      "path": "rust-lint/",
+      "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/rust-lint/README.md",
       "signature": "oY582w2Ur0I3NvzsZ+Ep9qMLM/exlmNGZx6VtZRSJq5eNO7h6bhFPOefsMn89Il3z2QkhloXSz97ZR52hp03Bw==",
-      "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/rust-lint/README.md"
+      "tags": [
+        "rust",
+        "linting",
+        "clippy",
+        "cargo"
+      ],
+      "version": "1.5.0"
     },
     {
-      "name": "file-explorer",
-      "version": "0.4.0",
-      "description": "Cross-platform file explorer tree view with native filesystem API, context menus, file management (create/rename/delete), configurable position, hidden files toggle, and smart directory filtering",
-      "path": "file-explorer/",
       "author": "Federico Conticello",
-      "license": "MIT",
-      "tags": ["file-explorer", "tree-view", "navigation"],
-      "min_ferrispad_version": "0.9.1",
       "checksums": {
-        "init.lua": "sha256:63569172afd197557c0b1acb8be64c2d92869111ba919d123e89bda7193b3431",
+        "init.lua": "sha256:64c8871c02aa351300c229b01045e450e3f57db298db7e72463a7048dc08e9fa",
         "plugin.toml": "sha256:d2cb04b920af3d8dbc2aa0ba7388bc93246514d27c63f5b0dd4cb0fa576ffae7"
       },
-      "signature": "gwU9PHLp3EcEivaH7+MoGa41JlfFx3sXlMloh9HysuGO1yoMsVuwEEEA56EqY/trhZ/2pNyhTyFfFHF/i1CoAg==",
-      "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/file-explorer/README.md"
+      "description": "Cross-platform file explorer tree view with native filesystem API, context menus, file management (create/rename/delete), configurable position, hidden files toggle, and smart directory filtering",
+      "license": "MIT",
+      "min_ferrispad_version": "0.9.1",
+      "name": "file-explorer",
+      "path": "file-explorer/",
+      "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/file-explorer/README.md",
+      "signature": "vVXYKkhjBb/4XQZ6IkJU/s5fvQTt6NOg6G5a2tQTrkrksclsFWmnBK/RnAf0cCjtGH97teHKTLutyl61YVIADA==",
+      "tags": [
+        "file-explorer",
+        "tree-view",
+        "navigation"
+      ],
+      "version": "0.4.0"
     },
     {
-      "name": "yaml-json-viewer",
-      "version": "1.0.1",
-      "description": "Tree viewer for YAML and JSON files with collapsible nodes, search, copy value, and copy key path",
-      "path": "yaml-json-viewer/",
       "author": "Federico Conticello",
-      "license": "MIT",
-      "tags": ["yaml", "json", "tree-view", "viewer"],
-      "min_ferrispad_version": "0.9.1",
       "checksums": {
-        "init.lua": "sha256:084cf042d9efc9bf12a0fdc02b3869c24ea750dbe62e5affaabfc4b8b8605b00",
+        "init.lua": "sha256:8cedf783fe8d546b90264ddb6f922505ccede3dfcb1f906d978e26ee6000eb41",
         "plugin.toml": "sha256:2f2d89c55d168ddb4abd3433000d61bc1ba91b9937e380ae420211a357f79dfc"
       },
-      "signature": "oRLZ2D6mjZ/PItiXv9mlHRmoYGE0LjsEJJ3xMBKB3DERaHOFjUzMFTBza7Zf9KMjX8/4zPMZxQZ2YKaOmcPODQ==",
-      "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/yaml-json-viewer/README.md"
+      "description": "Tree viewer for YAML and JSON files with collapsible nodes, search, copy value, and copy key path",
+      "license": "MIT",
+      "min_ferrispad_version": "0.9.1",
+      "name": "yaml-json-viewer",
+      "path": "yaml-json-viewer/",
+      "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/yaml-json-viewer/README.md",
+      "signature": "D/nz5K9isq2WNVAZPVTMMapx70+QPkeqVAAu9cLq8oNfRc1oUeGo48TQgDO56pkaom/eJu21JrVXPOPv92J3BA==",
+      "tags": [
+        "yaml",
+        "json",
+        "tree-view",
+        "viewer"
+      ],
+      "version": "1.0.1"
     },
     {
-      "name": "git-diff",
-      "version": "1.0.0",
-      "description": "Show git diff in a split view with revert capability",
-      "path": "git-diff/",
       "author": "Federico Conticello",
-      "license": "MIT",
-      "tags": ["git", "diff", "split-view"],
-      "min_ferrispad_version": "0.9.1",
       "checksums": {
-        "init.lua": "sha256:c9e29464a9559972d6fb58488021ca48e9e9ec47bdc1f628395c47dd6e5bfc33",
-        "plugin.toml": "sha256:c8e35db6134105ad6467eadfc1e92a1ee30d36e257adb03861ef11872c453170"
+        "init.lua": "sha256:3f86727554be8bdbc8e9f0a721edcb93236071093402671996a5428e563e24ee",
+        "plugin.toml": "sha256:760e24b26b923e2e39ef7063198b2e009d03f678fd52f72dcb5270bccf39fb11"
       },
-      "signature": "DA7M2bzRI73By4kcE98wdKNGvjaUOwZY/1t5ujyOK/IFa6IUtjnLohyEHymd3r1CogzbFkGuLLj4T+T2/r0yDA==",
-      "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/git-diff/README.md"
+      "description": "Show git diff in a split view with revert capability",
+      "license": "MIT",
+      "min_ferrispad_version": "0.9.1",
+      "name": "git-diff",
+      "path": "git-diff/",
+      "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/git-diff/README.md",
+      "signature": "AqVqCVrxf5jMescoCq5aWyu+ydGat8qXr3jN2ebTVPBwUfgCA5rjUp3cqYGqXGU3iJ3RclYV+iCi0qAD+PJBBA==",
+      "tags": [
+        "git",
+        "diff",
+        "split-view"
+      ],
+      "version": "1.1.0"
     }
-  ]
+  ],
+  "updated": "2026-03-04",
+  "version": 1
 }

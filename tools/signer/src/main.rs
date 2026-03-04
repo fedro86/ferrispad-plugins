@@ -4,6 +4,8 @@
 //!   plugin-signer keygen                    - Generate new keypair
 //!   plugin-signer sign <plugin_dir>         - Sign a plugin
 //!   plugin-signer verify <plugin_dir>       - Verify a plugin (for testing)
+//!   plugin-signer update <plugin_dir>       - Sign + update plugins.json
+//!   plugin-signer update-all                - Sign all plugins + update plugins.json
 //!   plugin-signer sign-release <binary> <version> <platform> - Sign a release binary
 
 use base64::Engine;
@@ -12,6 +14,7 @@ use ed25519_dalek::{SigningKey, Signer, VerifyingKey, Verifier, Signature};
 use sha2::{Sha256, Digest};
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 const KEY_DIR: &str = ".config/ferrispad/signing";
 const PRIVATE_KEY_FILE: &str = "plugin_signing_key.bin";
@@ -62,6 +65,20 @@ enum Commands {
         platform: String,
         /// Base64-encoded signature
         signature: String,
+    },
+    /// Sign a plugin and update plugins.json
+    Update {
+        /// Path to plugin directory
+        plugin_dir: PathBuf,
+        /// Path to plugins.json registry
+        #[arg(long, default_value = "plugins.json")]
+        registry: PathBuf,
+    },
+    /// Sign all plugins and update plugins.json
+    UpdateAll {
+        /// Path to plugins.json registry
+        #[arg(long, default_value = "plugins.json")]
+        registry: PathBuf,
     },
 }
 
@@ -155,7 +172,29 @@ fn load_verifying_key() -> Result<VerifyingKey, Box<dyn std::error::Error>> {
     Ok(VerifyingKey::from_bytes(&key_bytes)?)
 }
 
-fn sign_plugin(plugin_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
+/// Extract a string value from a TOML file's content by key.
+/// Expects lines like: `key = "value"`
+fn extract_toml_string(content: &str, key: &str) -> Option<String> {
+    let prefix = format!("{} = ", key);
+    content.lines()
+        .find(|line| line.starts_with(&prefix))
+        .and_then(|line| line.strip_prefix(&prefix))
+        .map(|v| v.trim_matches('"').to_string())
+}
+
+/// Result of computing a plugin signature.
+struct PluginSignResult {
+    plugin_name: String,
+    version: String,
+    #[allow(dead_code)] // kept for future use; registry descriptions are hand-crafted
+    description: String,
+    init_checksum: String,
+    toml_checksum: String,
+    signature_b64: String,
+}
+
+/// Core signing logic: compute checksums and sign a plugin directory.
+fn compute_plugin_signature(plugin_dir: &Path) -> Result<PluginSignResult, Box<dyn std::error::Error>> {
     let init_lua = plugin_dir.join("init.lua");
     let plugin_toml = plugin_dir.join("plugin.toml");
 
@@ -166,52 +205,59 @@ fn sign_plugin(plugin_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
         return Err(format!("plugin.toml not found in {:?}", plugin_dir).into());
     }
 
-    // Read files
     let init_content = fs::read(&init_lua)?;
     let toml_content = fs::read_to_string(&plugin_toml)?;
 
-    // Extract version from plugin.toml
-    let version = toml_content.lines()
-        .find(|line| line.starts_with("version = "))
-        .and_then(|line| line.strip_prefix("version = "))
-        .map(|v| v.trim_matches('"'))
+    let version = extract_toml_string(&toml_content, "version")
         .ok_or("Could not find version in plugin.toml")?;
+    let description = extract_toml_string(&toml_content, "description")
+        .unwrap_or_default();
 
-    // Compute checksums
     let init_checksum = compute_checksum(&init_content);
     let toml_checksum = compute_checksum(toml_content.as_bytes());
 
-    // Build plugin path (directory name with trailing slash)
     let plugin_name = plugin_dir.file_name()
         .ok_or("Invalid plugin directory")?
-        .to_string_lossy();
+        .to_string_lossy()
+        .to_string();
     let plugin_path = format!("{}/", plugin_name);
 
-    // Build message to sign (same format as FerrisPad verification)
     let message = format!("{}:{}:{}:{}", plugin_path, version, init_checksum, toml_checksum);
 
-    // Sign
     let signing_key = load_signing_key()?;
     let signature = signing_key.sign(message.as_bytes());
     let signature_b64 = base64::engine::general_purpose::STANDARD.encode(signature.to_bytes());
 
-    println!("Plugin: {}", plugin_name);
-    println!("Version: {}", version);
+    Ok(PluginSignResult {
+        plugin_name,
+        version,
+        description,
+        init_checksum,
+        toml_checksum,
+        signature_b64,
+    })
+}
+
+fn sign_plugin(plugin_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let result = compute_plugin_signature(plugin_dir)?;
+
+    println!("Plugin: {}", result.plugin_name);
+    println!("Version: {}", result.version);
     println!();
     println!("Checksums:");
-    println!("  init.lua:    {}", init_checksum);
-    println!("  plugin.toml: {}", toml_checksum);
+    println!("  init.lua:    {}", result.init_checksum);
+    println!("  plugin.toml: {}", result.toml_checksum);
     println!();
-    println!("Message signed: {}", message);
-    println!("Signature: {}", signature_b64);
+    println!("Message signed: {}/:{}:{}:{}", result.plugin_name, result.version, result.init_checksum, result.toml_checksum);
+    println!("Signature: {}", result.signature_b64);
     println!();
     println!("JSON fragment for plugins.json:");
     println!("----------------------------------------");
     println!(r#"    "checksums": {{"#);
-    println!(r#"      "init.lua": "{}","#, init_checksum);
-    println!(r#"      "plugin.toml": "{}""#, toml_checksum);
+    println!(r#"      "init.lua": "{}","#, result.init_checksum);
+    println!(r#"      "plugin.toml": "{}""#, result.toml_checksum);
     println!(r#"    }},"#);
-    println!(r#"    "signature": "{}""#, signature_b64);
+    println!(r#"    "signature": "{}""#, result.signature_b64);
     println!("----------------------------------------");
 
     Ok(())
@@ -224,10 +270,7 @@ fn verify_plugin(plugin_dir: &Path, signature_b64: &str) -> Result<(), Box<dyn s
     let init_content = fs::read(&init_lua)?;
     let toml_content = fs::read_to_string(&plugin_toml)?;
 
-    let version = toml_content.lines()
-        .find(|line| line.starts_with("version = "))
-        .and_then(|line| line.strip_prefix("version = "))
-        .map(|v| v.trim_matches('"'))
+    let version = extract_toml_string(&toml_content, "version")
         .ok_or("Could not find version in plugin.toml")?;
 
     let init_checksum = compute_checksum(&init_content);
@@ -353,6 +396,124 @@ fn verify_release(
     Ok(())
 }
 
+/// Get today's date as YYYY-MM-DD without chrono.
+/// Uses a civil date conversion from Unix timestamp.
+fn today_iso() -> String {
+    let secs = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+
+    // Civil date from days since epoch (algorithm from Howard Hinnant)
+    let days = (secs / 86400) as i64;
+    let z = days + 719468;
+    let era = if z >= 0 { z } else { z - 146096 } / 146097;
+    let doe = (z - era * 146097) as u64;
+    let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+    let y = (yoe as i64) + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let y = if m <= 2 { y + 1 } else { y };
+
+    format!("{:04}-{:02}-{:02}", y, m, d)
+}
+
+/// Sign a single plugin and update its entry in plugins.json.
+fn update_plugin(
+    plugin_dir: &Path,
+    registry: &mut serde_json::Value,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let result = compute_plugin_signature(plugin_dir)?;
+
+    let plugins = registry
+        .get_mut("plugins")
+        .and_then(|v| v.as_array_mut())
+        .ok_or("plugins.json missing 'plugins' array")?;
+
+    let entry = plugins.iter_mut()
+        .find(|p| p.get("name").and_then(|n| n.as_str()) == Some(&result.plugin_name))
+        .ok_or_else(|| format!(
+            "Plugin '{}' not found in plugins.json. Add a scaffold entry first (author, license, tags, etc.).",
+            result.plugin_name
+        ))?;
+
+    // Update version, checksums, signature
+    entry["version"] = serde_json::json!(result.version);
+    entry["checksums"] = serde_json::json!({
+        "init.lua": result.init_checksum,
+        "plugin.toml": result.toml_checksum,
+    });
+    entry["signature"] = serde_json::json!(result.signature_b64);
+
+    println!("  {} v{} — signed", result.plugin_name, result.version);
+
+    Ok(())
+}
+
+/// Update a single plugin and write plugins.json.
+fn update_command(plugin_dir: &Path, registry_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let content = fs::read_to_string(registry_path)
+        .map_err(|_| format!("Could not read {:?}", registry_path))?;
+    let mut registry: serde_json::Value = serde_json::from_str(&content)
+        .map_err(|e| format!("Invalid JSON in {:?}: {}", registry_path, e))?;
+
+    update_plugin(plugin_dir, &mut registry)?;
+
+    // Update top-level date
+    registry["updated"] = serde_json::json!(today_iso());
+
+    let output = serde_json::to_string_pretty(&registry)? + "\n";
+    fs::write(registry_path, output)?;
+
+    println!("Updated {:?}", registry_path);
+    Ok(())
+}
+
+/// Discover all plugin subdirectories and update plugins.json once.
+fn update_all_command(registry_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let content = fs::read_to_string(registry_path)
+        .map_err(|_| format!("Could not read {:?}", registry_path))?;
+    let mut registry: serde_json::Value = serde_json::from_str(&content)
+        .map_err(|e| format!("Invalid JSON in {:?}: {}", registry_path, e))?;
+
+    // Find all subdirectories containing plugin.toml
+    let base = match registry_path.parent() {
+        Some(p) if p.as_os_str().is_empty() => Path::new("."),
+        Some(p) => p,
+        None => Path::new("."),
+    };
+    let mut found = 0;
+
+    let mut entries: Vec<_> = fs::read_dir(base)?
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().join("plugin.toml").exists())
+        .collect();
+    entries.sort_by_key(|e| e.file_name());
+
+    for entry in entries {
+        let plugin_dir = entry.path();
+        match update_plugin(&plugin_dir, &mut registry) {
+            Ok(()) => found += 1,
+            Err(e) => eprintln!("  Warning: skipping {:?}: {}", plugin_dir, e),
+        }
+    }
+
+    if found == 0 {
+        return Err("No plugin directories found".into());
+    }
+
+    // Update top-level date
+    registry["updated"] = serde_json::json!(today_iso());
+
+    let output = serde_json::to_string_pretty(&registry)? + "\n";
+    fs::write(registry_path, output)?;
+
+    println!("Updated {:?} ({} plugins)", registry_path, found);
+    Ok(())
+}
+
 fn main() {
     let cli = Cli::parse();
 
@@ -366,6 +527,12 @@ fn main() {
         }
         Commands::VerifyRelease { binary, version, platform, signature } => {
             verify_release(&binary, &version, &platform, &signature)
+        }
+        Commands::Update { plugin_dir, registry } => {
+            update_command(&plugin_dir, &registry)
+        }
+        Commands::UpdateAll { registry } => {
+            update_all_command(&registry)
         }
     };
 
