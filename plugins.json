@@ -45,7 +45,7 @@
     {
       "author": "Federico Conticello",
       "checksums": {
-        "init.lua": "sha256:64c8871c02aa351300c229b01045e450e3f57db298db7e72463a7048dc08e9fa",
+        "init.lua": "sha256:57015b344fdc7380e7c8b17d4291db8b8291fa4c48ad729cd3b7642a6b8ad647",
         "plugin.toml": "sha256:d2cb04b920af3d8dbc2aa0ba7388bc93246514d27c63f5b0dd4cb0fa576ffae7"
       },
       "description": "Cross-platform file explorer tree view with native filesystem API, context menus, file management (create/rename/delete), configurable position, hidden files toggle, and smart directory filtering",
@@ -54,7 +54,7 @@
       "name": "file-explorer",
       "path": "file-explorer/",
       "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/file-explorer/README.md",
-      "signature": "vVXYKkhjBb/4XQZ6IkJU/s5fvQTt6NOg6G5a2tQTrkrksclsFWmnBK/RnAf0cCjtGH97teHKTLutyl61YVIADA==",
+      "signature": "yshbmS31m11hA3hZUzhCx4ip7FDxnL7a6Epaa4rLwCWD0I/KOhmNKk0WUcWfkMi4dm5Q6OaP491oWnbPEUzFBg==",
       "tags": [
         "file-explorer",
         "tree-view",
