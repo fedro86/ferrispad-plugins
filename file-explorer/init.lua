@@ -302,6 +302,7 @@ local function refresh_tree(api)
         }
     end
     tree_data.on_click = "open_file"
+    tree_data.persistent = true
     return { tree_view = tree_data }
 end
 
@@ -323,6 +324,7 @@ function M.on_menu_action(api, action, path, content)
 
         -- Add on_click handler so tree node clicks trigger on_widget_action
         tree_data.on_click = "open_file"
+        tree_data.persistent = true
 
         tree_shown = true
 
