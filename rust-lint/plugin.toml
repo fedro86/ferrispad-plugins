@@ -1,5 +1,5 @@
 name = "Rust Lint"
-version = "1.4.0"
+version = "1.5.0"
 description = "Run clippy and cargo build on Rust files"
 
 [permissions]
@@ -20,6 +20,12 @@ action = "run_build"
 
 # Configurable parameters (accessible via api:get_config())
 [config]
+[[config.params]]
+key = "lint_on_save"
+label = "Lint on Save"
+type = "boolean"
+default = "true"
+
 [[config.params]]
 key = "clippy_enabled"
 label = "Run Clippy"

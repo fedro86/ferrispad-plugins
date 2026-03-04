@@ -1003,7 +1003,42 @@ url = "https://eslint.org/docs/rules/" .. rule_code
 
 Users can double-click diagnostics to open these URLs.
 
-### 7. Individual Tool Toggles
+### 7. Lint on Save Toggle
+
+**Add a `lint_on_save` config param so users can disable automatic linting on save:**
+
+```toml
+[[config.params]]
+key = "lint_on_save"
+label = "Lint on Save"
+type = "boolean"
+default = "true"
+```
+
+```lua
+local function is_lint_on_save(api)
+    local val = api:get_config("lint_on_save")
+    return val == nil or val == "true" or val == true
+end
+
+function M.on_document_lint(api, path, content)
+    if api:get_file_extension() ~= "py" or not path then
+        return nil
+    end
+
+    if not is_lint_on_save(api) then
+        return nil
+    end
+
+    -- Continue with linting...
+end
+```
+
+**Important**: Do NOT gate `on_highlight_request` or `on_menu_action` with this check — those are manual triggers (keyboard shortcut, menu click) and should always work regardless of the `lint_on_save` setting.
+
+**Note**: Use the `val == nil` pattern (not `api:get_config_bool()`) so that unconfigured state defaults to "true". `get_config_bool()` returns `false` when the key is missing, which would disable linting on a fresh install.
+
+### 8. Individual Tool Toggles
 
 **Allow users to enable/disable each tool independently:**
 
@@ -1022,7 +1057,7 @@ end
 
 **Note**: Toggle state is in-memory and resets on restart (acceptable limitation).
 
-### 8. Menu Structure
+### 9. Menu Structure
 
 Every linter plugin should have these menu items:
 
@@ -1049,7 +1084,7 @@ label = "Toggle Tool2"
 action = "toggle_tool2"
 ```
 
-### 9. Status Messages
+### 10. Status Messages
 
 **Always provide feedback to users:**
 
@@ -1060,7 +1095,7 @@ action = "toggle_tool2"
 | All checks disabled | `warning` | `[Plugin] All checks disabled` |
 | Success (0 issues) | None | Don't show a message, just clear diagnostics |
 
-### 10. Line Highlights
+### 11. Line Highlights
 
 **Generate inline highlights for each diagnostic:**
 

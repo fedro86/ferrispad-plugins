@@ -1,7 +1,7 @@
--- Rust Lint Plugin for FerrisPad v1.3.0
+-- Rust Lint Plugin for FerrisPad v1.5.0
 local M = {
     name = "Rust Lint",
-    version = "1.3.0",
+    version = "1.5.0",
     description = "Run clippy/cargo build on Rust files"
 }
 
@@ -13,6 +13,11 @@ end
 
 local function is_build_enabled(api)
     local val = api:get_config("build_enabled")
+    return val == nil or val == "true" or val == true
+end
+
+local function is_lint_on_save(api)
+    local val = api:get_config("lint_on_save")
     return val == nil or val == "true" or val == true
 end
 
@@ -189,13 +194,13 @@ local function run_build(api, path)
     return {}
 end
 
--- Main lint function
-function M.on_document_lint(api, path, content)
+-- Core lint logic (no lint_on_save gate)
+local function run_all_checks(api, path, content)
     if api:get_file_extension() ~= "rs" or not path then
         return nil
     end
 
-    -- Check if cargo is installed (similar to Python lint checking for ruff/pyright)
+    -- Check if cargo is installed
     if not api:command_exists("cargo") then
         return { diagnostics = {}, highlights = {},
             status_message = { level = "warning", text = "[Rust Lint] cargo not found. Install via: rustup.rs" } }
@@ -248,8 +253,15 @@ function M.on_document_lint(api, path, content)
     return { diagnostics = all_diagnostics, highlights = highlights }
 end
 
+-- On save: gate on lint_on_save config
+function M.on_document_lint(api, path, content)
+    if not is_lint_on_save(api) then return nil end
+    return run_all_checks(api, path, content)
+end
+
+-- Manual triggers bypass lint_on_save gate
 function M.on_highlight_request(api, path, content)
-    return M.on_document_lint(api, path, content)
+    return run_all_checks(api, path, content)
 end
 
 -- Run only clippy (ignoring config for build_enabled)
@@ -311,8 +323,8 @@ end
 -- Handle menu actions
 function M.on_menu_action(api, action, path, content)
     if action == "lint" then
-        -- Run all enabled checks (respects config toggles)
-        return M.on_document_lint(api, path, content)
+        -- Run all enabled checks (bypasses lint_on_save gate)
+        return run_all_checks(api, path, content)
 
     elseif action == "run_clippy" then
         if api:get_file_extension() ~= "rs" then

@@ -66,6 +66,9 @@ enum Commands {
 }
 
 fn get_key_dir() -> PathBuf {
+    if let Ok(path) = std::env::var("SIGNING_KEY_PATH") {
+        return PathBuf::from(path);
+    }
     let home = std::env::var("HOME").expect("HOME not set");
     PathBuf::from(home).join(KEY_DIR)
 }

@@ -1,7 +1,7 @@
--- Python Linter Plugin for FerrisPad v2.5.0
+-- Python Linter Plugin for FerrisPad v2.7.0
 local M = {
     name = "Python Lint",
-    version = "2.5.0",
+    version = "2.7.0",
     description = "Run ruff/pyright on Python files (supports project venv)"
 }
 
@@ -13,6 +13,11 @@ end
 
 local function is_pyright_enabled(api)
     local val = api:get_config("pyright_enabled")
+    return val == nil or val == "true" or val == true
+end
+
+local function is_lint_on_save(api)
+    local val = api:get_config("lint_on_save")
     return val == nil or val == "true" or val == true
 end
 
@@ -274,8 +279,8 @@ local function run_pyright(api, path)
     return {}, true
 end
 
--- Main lint function
-function M.on_document_lint(api, path, content)
+-- Core lint logic (no lint_on_save gate)
+local function run_all_checks(api, path, content)
     if api:get_file_extension() ~= "py" or not path then
         return nil
     end
@@ -331,8 +336,15 @@ function M.on_document_lint(api, path, content)
     return { diagnostics = all_diagnostics, highlights = highlights }
 end
 
+-- On save: gate on lint_on_save config
+function M.on_document_lint(api, path, content)
+    if not is_lint_on_save(api) then return nil end
+    return run_all_checks(api, path, content)
+end
+
+-- Manual triggers bypass lint_on_save gate
 function M.on_highlight_request(api, path, content)
-    return M.on_document_lint(api, path, content)
+    return run_all_checks(api, path, content)
 end
 
 -- Run only ruff (ignoring config for pyright_enabled)
@@ -384,8 +396,8 @@ end
 -- Handle custom menu actions
 function M.on_menu_action(api, action, path, content)
     if action == "lint" then
-        -- Run all enabled checks (respects config toggles)
-        return M.on_document_lint(api, path, content)
+        -- Run all enabled checks (bypasses lint_on_save gate)
+        return run_all_checks(api, path, content)
 
     elseif action == "run_ruff" then
         if api:get_file_extension() ~= "py" then

@@ -1,37 +1,37 @@
 {
   "version": 1,
-  "updated": "2026-03-01",
+  "updated": "2026-03-04",
   "plugins": [
     {
       "name": "python-lint",
-      "version": "2.6.0",
-      "description": "Python linting with ruff and pyright, supports project venv detection and configurable tool arguments with dropdown presets",
+      "version": "2.7.0",
+      "description": "Python linting with ruff and pyright, supports project venv detection, lint-on-save toggle, and configurable tool arguments with dropdown presets",
       "path": "python-lint/",
       "author": "Federico Conticello",
       "license": "MIT",
       "tags": ["python", "linting", "ruff", "pyright"],
       "min_ferrispad_version": "0.9.1",
       "checksums": {
-        "init.lua": "sha256:03f5d1108ea59acbd258a8fdef630fb98b6cb7e9e24f1dc31abe7cc107ecba4a",
-        "plugin.toml": "sha256:bec1d6ecbc39dd8bba0a8c121da3e199439a1ac9fc0e94eb00275481b6316b60"
+        "init.lua": "sha256:a487368ef0e9afe37319056ba8218d1f5958e677cb23b7ae78ec5649c4fa24f1",
+        "plugin.toml": "sha256:06a2c351990c2adaeae0c8c83f8e68488bdef850685a04a08990b5f449ac5568"
       },
-      "signature": "88szbrjUi4FGZCTmghI+2ezirSG1cf2cm/mBXj47Sm7IVY334Zozq+0476Kkpn77QkCDGefOYI9rzqwa8gewBw==",
+      "signature": "WiCc/BXwjx9xYLvGQRkzROru199WzClmrO+Fb9T07roXFlrSM3rYJERWZx9BKDtP0YUUSQmYVmNiZMNiVF++Dw==",
       "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/python-lint/README.md"
     },
     {
       "name": "rust-lint",
-      "version": "1.4.0",
-      "description": "Rust linting with clippy and cargo build, individual toggles for each tool, and configurable arguments with dropdown presets",
+      "version": "1.5.0",
+      "description": "Rust linting with clippy and cargo build, individual toggles for each tool, lint-on-save toggle, and configurable arguments with dropdown presets",
       "path": "rust-lint/",
       "author": "Federico Conticello",
       "license": "MIT",
       "tags": ["rust", "linting", "clippy", "cargo"],
       "min_ferrispad_version": "0.9.1",
       "checksums": {
-        "init.lua": "sha256:d4c57f9889b16cc115577be186d0eef7cfc28eefc09ffc323adaf4c8c4158313",
-        "plugin.toml": "sha256:ce34da00f80479a035096e118988c78141489ed100eea1136d5e56f172563863"
+        "init.lua": "sha256:0ce63e3ee8ad217fbba065ba8e43a89be40e8bd608198502105872ddb9545810",
+        "plugin.toml": "sha256:5002148250967d2e24b50f45a0614a39bc4913146e03b81b99770e4c35a65f31"
       },
-      "signature": "lXYfU82udUL6Q0gHNkygQUiT/979LG4MikO3Aci9xmTnj8T4fBfwJPp/zzMQtNIrS8FDMiPtLQQz1prmw29UBA==",
+      "signature": "oY582w2Ur0I3NvzsZ+Ep9qMLM/exlmNGZx6VtZRSJq5eNO7h6bhFPOefsMn89Il3z2QkhloXSz97ZR52hp03Bw==",
       "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/rust-lint/README.md"
     },
     {
