@@ -366,6 +366,7 @@ Hooks are Lua functions that FerrisPad calls in response to editor events. Defin
 | `on_document_open` | `on_document_open(self, api, path)` | After a document is opened |
 | `on_document_save` | `on_document_save(self, api, path, content)` | Before a document is saved |
 | `on_document_close` | `on_document_close(self, api, path)` | When a document is closed |
+| `on_text_changed` | `on_text_changed(self, api, position, inserted_len, deleted_len)` | After text is edited (debounced 300ms) |
 | `on_theme_changed` | `on_theme_changed(self, api, is_dark)` | Dark/light mode toggle |
 | `on_document_lint` | `on_document_lint(self, api, path, content)` | After save, for lint/check |
 | `on_highlight_request` | `on_highlight_request(self, api, path, content)` | Manual highlight (Ctrl+Shift+L) |
@@ -394,6 +395,40 @@ function M:on_theme_changed(api, is_dark)
     end
 end
 ```
+
+### on_text_changed
+
+Called after the user edits text in the editor. **Debounced at 300ms** — the hook fires once after typing stops, not on every keystroke. Multiple rapid edits are coalesced: `position` is the earliest edit position, and `inserted_len`/`deleted_len` are the cumulative totals.
+
+**Signature:** `function M:on_text_changed(api, position, inserted_len, deleted_len)`
+
+**Parameters:**
+- `api` — Editor API object
+- `position` (integer) — Byte offset of the earliest edit
+- `inserted_len` (integer) — Total bytes inserted since last hook fire
+- `deleted_len` (integer) — Total bytes deleted since last hook fire
+
+**Return value:** Standard result table (diagnostics, annotations, status_message, etc.) or `nil`.
+
+**Use case:** Real-time feedback that doesn't need to run on every keystroke — e.g., incremental lint, word count updates, bracket matching.
+
+```lua
+function M:on_text_changed(api, position, inserted_len, deleted_len)
+    -- Example: update word count in toast
+    local text = api:get_text()
+    if text then
+        local _, count = text:gsub("%S+", "")
+        return {
+            status_message = {
+                level = "info",
+                text = string.format("[Word Count] %d words", count)
+            }
+        }
+    end
+end
+```
+
+> **Note:** This hook is designed for lightweight, non-blocking work. Heavy operations (external commands, large file scans) should use `on_document_lint` or `on_highlight_request` instead, which are triggered explicitly by the user.
 
 ---
 
@@ -633,6 +668,7 @@ return {
             content = "modified text",
             label = "Modified",
             line_numbers = true,
+            read_only = false,  -- allow user to edit before accepting (default: true)
             highlights = {
                 { line = 1, color = "added" }
             }
@@ -690,7 +726,19 @@ function M.on_widget_action(api, widget_type, action, session_id, data)
 end
 ```
 
+**Pane fields:**
+
+| Field | Default | Description |
+|-------|---------|-------------|
+| `content` | `""` | Text content to display |
+| `label` | `"Left"` / `"Right"` | Label shown above the pane |
+| `line_numbers` | `true` | Whether to show line numbers |
+| `read_only` | `true` | If `false`, the user can edit the pane content before accepting |
+| `highlights` | `{}` | Line highlights for diff coloring (see below) |
+
 **Highlight colors**: `"added"` (green), `"removed"` (red), `"modified"` (yellow)
+
+**Editable panes:** When `read_only = false`, the user can type, paste, and delete in that pane. On accept, `data.right_content` in the `on_widget_action` hook contains the user's edited text. This is useful for AI suggestion workflows where the user wants to tweak the suggestion before applying it.
 
 **Automatic behavior** (no plugin action required):
 - **Syntax highlighting**: FerrisPad automatically applies syntax coloring to split view pane content based on the active document's language. Syntax foreground colors are combined with diff background colors, so keywords, strings, and types remain visually distinct even on colored diff lines.
