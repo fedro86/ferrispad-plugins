@@ -7,6 +7,9 @@ Thank you for your interest in contributing to FerrisPad's plugin ecosystem!
 - [Plugin Structure](#plugin-structure)
 - [Plugin Configuration](#plugin-configuration)
 - [Filesystem API Reference](#filesystem-api-reference)
+- [Document Information](#document-information)
+- [Hooks](#hooks)
+- [Resource Limits](#resource-limits)
 - [UI Widgets Reference](#ui-widgets-reference)
 - [Linter Plugin Guidelines](#linter-plugin-guidelines)
 - [Diagnostic Format](#diagnostic-format)
@@ -210,6 +213,7 @@ FerrisPad provides a cross-platform filesystem API that plugins can use for file
 | `api:is_file(path)` | `bool` | Check if a path is a regular file (not a directory) |
 | `api:list_dir(path)` | `table` or `nil` | List entries in a single directory (non-recursive) |
 | `api:scan_dir(path, max_depth?)` | `table` or `nil` | Recursively scan a directory tree |
+| `api:read_file(path)` | `string\|nil, string\|nil` | Read file contents (sandboxed to project root) |
 
 ### Write Operations
 
@@ -291,6 +295,120 @@ local ok, err = api:remove("/project/temp_dir")  -- recursive for directories
 | Run external tools (linters, formatters) | `api:run_command()` |
 
 Prefer the filesystem API over shelling out — it's cross-platform, faster, and doesn't require `execute` permissions.
+
+### `api:read_file(path)`
+
+Reads the contents of a file inside the project root. Returns two values: the content string on success, or `nil` plus an error message on failure.
+
+```lua
+local content, err = api:read_file("/project/src/config.toml")
+if content then
+    -- process content
+else
+    api:log("Failed: " .. (err or "unknown error"))
+end
+```
+
+**Security**: Path is validated against the project root. Paths outside the sandbox return `(nil, "Path outside project root")`.
+
+---
+
+## Document Information
+
+These methods provide read-only access to the current document state. They are available in all hooks that receive an `api` parameter.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `api:get_text()` | `string\|nil` | Get full document text |
+| `api:get_file_path()` | `string\|nil` | Get current file path (`nil` for untitled) |
+| `api:get_language()` | `string\|nil` | Get detected language/syntax name |
+| `api:get_file_extension()` | `string\|nil` | Get file extension (without dot) |
+| `api:get_file_dir()` | `string\|nil` | Get directory containing the current file |
+| `api:get_project_root()` | `string\|nil` | Get project root directory |
+| `api:get_selection()` | `string\|nil` | Get currently selected text |
+| `api:get_cursor_position()` | `integer` | Get cursor byte offset in the buffer |
+| `api:get_line(line_num)` | `string\|nil` | Get a specific line by number (1-indexed) |
+| `api:is_dirty()` | `boolean` | Check if the document has unsaved changes |
+
+### Configuration
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `api:get_config(key)` | `string\|nil` | Get string config value |
+| `api:get_config_number(key)` | `number\|nil` | Get numeric config value |
+| `api:get_config_bool(key)` | `boolean` | Get boolean config value (`false` if unset) |
+
+### Git
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `api:git_status(path)` | `table\|nil` | Get git status for a directory (maps relative paths to status codes like `"M"`, `"A"`, `"??"`) |
+
+### Utilities
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `api:log(message)` | — | Print to stderr (visible when running from terminal) |
+| `api:command_exists(cmd)` | `boolean` | Check if a command is available on PATH |
+| `api:run_command(cmd, ...)` | `table` | Run an external command (requires `execute` permission) |
+| `api:diff_text(old, new)` | `table` | Compute aligned diff between two strings (returns `left_content`, `right_content`, `left_highlights`, `right_highlights`) |
+
+---
+
+## Hooks
+
+Hooks are Lua functions that FerrisPad calls in response to editor events. Define them as methods on your plugin module table.
+
+| Hook | Signature | When fired |
+|------|-----------|-----------|
+| `init` | `init(self)` | Plugin first loaded |
+| `shutdown` | `shutdown(self)` | Application shutting down |
+| `on_document_open` | `on_document_open(self, api, path)` | After a document is opened |
+| `on_document_save` | `on_document_save(self, api, path, content)` | Before a document is saved |
+| `on_document_close` | `on_document_close(self, api, path)` | When a document is closed |
+| `on_theme_changed` | `on_theme_changed(self, api, is_dark)` | Dark/light mode toggle |
+| `on_document_lint` | `on_document_lint(self, api, path, content)` | After save, for lint/check |
+| `on_highlight_request` | `on_highlight_request(self, api, path, content)` | Manual highlight (Ctrl+Shift+L) |
+| `on_menu_action` | `on_menu_action(self, api, action, path, content)` | User triggers a menu item |
+| `on_widget_action` | `on_widget_action(self, api, widget_type, action, session_id, data)` | User interacts with a widget |
+
+All hooks receive an `api` object as the first parameter (after `self`) that provides read-only access to document state. Hooks can return a result table with `diagnostics`, `highlights`, `status_message`, `modified_content`, `split_view`, `tree_view`, `open_file`, `clipboard_text`, and/or `goto_line` fields.
+
+### on_theme_changed
+
+Called when the user toggles between dark and light mode.
+
+**Signature:** `function M:on_theme_changed(api, is_dark)`
+
+**Parameters:**
+- `api` — Editor API object
+- `is_dark` (boolean) — `true` if dark mode is now active
+
+**Use case:** Plugins that manage widgets with custom colors can refresh their color scheme.
+
+```lua
+function M:on_theme_changed(api, is_dark)
+    -- Rebuild tree view with updated colors
+    if self.active then
+        return self:build_tree(api)
+    end
+end
+```
+
+---
+
+## Resource Limits
+
+FerrisPad enforces per-plugin resource limits to prevent runaway plugins from affecting editor responsiveness:
+
+| Limit | Value | Description |
+|-------|-------|-------------|
+| **Memory** | 16 MB per plugin | Lua allocator tracking; exceeding this aborts the hook call |
+| **Instructions** | 1,000,000 per hook call | Checked every 1,000 instructions; prevents infinite loops |
+| **Command timeout** | 30 seconds | Maximum wall-clock time for `api:run_command()` |
+| **Scan depth** | 5 (default), 10 (max) | Maximum directory recursion depth for `api:scan_dir()` |
+
+If a plugin exceeds the instruction or memory limit, the current hook call is aborted and an error is logged to stderr. The plugin remains loaded and will execute normally on the next hook call.
 
 ---
 
