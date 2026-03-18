@@ -1388,9 +1388,69 @@ The verification system is informational, not restrictive.
 
 ---
 
-## Submission Checklist
+## Community Plugin Submission
 
-Before submitting a pull request:
+If you want your plugin listed in FerrisPad's **Community** tab without being merged into this repository:
+
+### Requirements
+
+1. **Public GitHub repository** with `init.lua` and `plugin.toml` at the root
+2. Plugin must pass FerrisPad's static Lua security scan (no `loadstring`, `debug`, `ffi`, etc.)
+3. `plugin.toml` must declare all required permissions
+4. Include a `README.md` with usage instructions
+
+### How to Submit
+
+Open a pull request to this repository that adds an entry to `community-plugins.json`:
+
+```json
+{
+  "name": "your-plugin-name",
+  "repo": "https://github.com/your-user/your-plugin-repo",
+  "branch": "main",
+  "version": "1.0.0",
+  "description": "Short description",
+  "author": "Your Name",
+  "license": "MIT",
+  "min_ferrispad_version": "0.9.2",
+  "tags": ["relevant", "tags"]
+}
+```
+
+**Fields:**
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | Yes | Directory name for installation (lowercase, hyphenated) |
+| `repo` | Yes | GitHub repository URL |
+| `branch` | No | Git branch (defaults to `main`) |
+| `version` | Yes | Semver version string |
+| `description` | Yes | One-line description |
+| `author` | Yes | Author name |
+| `license` | Yes | License identifier (e.g., `MIT`, `Apache-2.0`) |
+| `min_ferrispad_version` | Yes | Minimum FerrisPad version required |
+| `tags` | Yes | Array of search tags |
+| `checksums` | No | SHA-256 checksums for `init.lua` and `plugin.toml` |
+
+### Review Process
+
+Community plugins are reviewed for:
+- No blocked Lua patterns (see security scan above)
+- Permissions match actual tool usage
+- `plugin.toml` is well-formed
+- Repository is accessible
+
+Community plugins are **not** signed — they show a "Community" badge in FerrisPad's Plugin Manager.
+
+### Updating Your Plugin
+
+When you release a new version, open a PR updating the `version` field (and `checksums` if provided) in `community-plugins.json`.
+
+---
+
+## Official Plugin Submission Checklist
+
+Before submitting a pull request for an **official** plugin (hosted in this repository):
 
 - [ ] `init.lua` - Main plugin logic
 - [ ] `plugin.toml` - Metadata with permissions, menu items, and config params
@@ -1411,4 +1471,4 @@ Before submitting a pull request:
 
 ## Questions?
 
-Open an issue at [ferrispad-plugins](https://github.com/fedro86/ferrispad-plugins/issues) or check the [FerrisPad Plugin API Documentation](https://github.com/fedro86/ferrispad/blob/main/docs/temp/0.9.1/07_DIAGNOSTIC_PANEL_ENHANCEMENTS.md).
+Open an issue at [ferrispad-plugins](https://github.com/fedro86/ferrispad-plugins/issues).

@@ -1,16 +1,68 @@
-# FerrisPad Official Plugins
+# FerrisPad Plugins
 
-Official plugins for [FerrisPad](https://github.com/fedro86/ferrispad), a lightweight text editor written in Rust.
+Plugin registry for [FerrisPad](https://github.com/fedro86/ferrispad), a lightweight text editor written in Rust.
 
-## Available Plugins
+## Official Plugins
 
-| Plugin | Description | Status |
-|--------|-------------|--------|
-| [python-lint](python-lint/) | Python linting with ruff and pyright | Stable |
-| [rust-lint](rust-lint/) | Rust linting with clippy and cargo build | Stable |
-| [file-explorer](file-explorer/) | File explorer tree view for project directories | Beta |
+These plugins are hosted in this repository, signed, and verified by FerrisPad.
+
+| Plugin | Version | Description |
+|--------|---------|-------------|
+| [python-lint](python-lint/) | 2.7.0 | Python linting with ruff and pyright (venv support, lint-on-save) |
+| [rust-lint](rust-lint/) | 1.5.0 | Rust linting with clippy and cargo build (individual toggles) |
+| [file-explorer](file-explorer/) | 0.4.0 | File explorer tree view with context menus and file management |
+| [yaml-json-viewer](yaml-json-viewer/) | 1.0.1 | Tree viewer for YAML and JSON files with search and copy actions |
+| [git-diff](git-diff/) | 1.1.0 | Show git diff in a split view with revert capability |
+
+## Community Plugins
+
+Community plugins are hosted in their own repositories and listed in [`community-plugins.json`](community-plugins.json). They are installable from the **Community** tab in FerrisPad's Plugin Manager.
+
+| Plugin | Author | Description |
+|--------|--------|-------------|
+| [javascript-lint](https://github.com/fedro86/ferrispad-js-linter) | Federico Conticello | Run ESLint on JavaScript and TypeScript files |
+
+### Three-Tier Trust Model
+
+FerrisPad uses a three-tier trust system for plugins:
+
+| Tier | Badge | Description |
+|------|-------|-------------|
+| **Official** | Verified | Hosted in this repo, signed with ed25519 — full trust |
+| **Community** | Community | Listed in `community-plugins.json`, reviewed before listing |
+| **Manual** | Unverified | Installed via URL — no review, user assumes responsibility |
+
+All tiers are installable. The badges are informational, helping users make informed decisions.
+
+### Listing a Community Plugin
+
+To get your plugin listed in the Community tab:
+
+1. Host your plugin in a public GitHub repository with `init.lua` and `plugin.toml` at the root
+2. Open a pull request to this repository adding an entry to `community-plugins.json`:
+
+```json
+{
+  "name": "your-plugin-name",
+  "repo": "https://github.com/your-user/your-plugin-repo",
+  "branch": "main",
+  "version": "1.0.0",
+  "description": "Short description",
+  "author": "Your Name",
+  "license": "MIT",
+  "min_ferrispad_version": "0.9.2",
+  "tags": ["relevant", "tags"]
+}
+```
+
+3. Your plugin will be reviewed for security (no blocked Lua patterns, reasonable permissions)
+4. Once merged, it appears in the Community tab for all FerrisPad users
 
 ## Installation
+
+### From the Plugin Manager (recommended)
+
+Open **Plugins > Plugin Manager** in FerrisPad. The **Official** and **Community** tabs let you install plugins with one click.
 
 ### Manual Installation
 
@@ -24,25 +76,16 @@ cp -r <plugin-name> ~/.config/ferrispad/plugins/
 copy <plugin-name> %APPDATA%\ferrispad\plugins\
 ```
 
-### From This Repository
-
-```bash
-# Clone the repository
-git clone https://github.com/fedro86/ferrispad-plugins.git
-
-# Copy desired plugins
-cp -r ferrispad-plugins/python-lint ~/.config/ferrispad/plugins/
-```
-
 ## Plugin Structure
 
 Each plugin follows this structure:
 
 ```
 plugin-name/
-├── init.lua      # Main plugin file (required)
-├── plugin.toml   # Plugin metadata and permissions (required)
-└── README.md     # Documentation (required)
+├── init.lua       # Main plugin logic (required)
+├── plugin.toml    # Metadata and permissions (required)
+├── README.md      # Documentation (required)
+└── CHANGELOG.md   # Version history (required for official)
 ```
 
 ### plugin.toml Format
@@ -58,18 +101,14 @@ execute = ["cmd1", "cmd2"]  # Commands the plugin can run
 
 ## Writing Plugins
 
-See the [FerrisPad Plugin API Documentation](https://github.com/fedro86/ferrispad/blob/main/docs/temp/0.9.1/07_DIAGNOSTIC_PANEL_ENHANCEMENTS.md) for details on:
-
-- Available hooks (`on_document_open`, `on_document_save`, `on_document_lint`, etc.)
-- API functions (`api:run_command()`, `api:file_exists()`, etc.)
-- Diagnostic format and severity levels
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full plugin API reference, including hooks, API functions, widgets, and diagnostic format.
 
 ## Contributing
 
-1. Fork this repository
-2. Create a new folder for your plugin
-3. Include `init.lua`, `plugin.toml`, and `README.md`
-4. Submit a pull request
+- **Official plugins**: Fork this repo, create a plugin folder, submit a PR
+- **Community plugins**: Host your own repo, submit a PR adding an entry to `community-plugins.json`
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines and the submission checklist.
 
 ## License
 
