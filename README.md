@@ -51,12 +51,17 @@ To get your plugin listed in the Community tab:
   "author": "Your Name",
   "license": "MIT",
   "min_ferrispad_version": "0.9.2",
-  "tags": ["relevant", "tags"]
+  "tags": ["relevant", "tags"],
+  "checksums": {
+    "init.lua": "sha256:<run sha256sum init.lua>",
+    "plugin.toml": "sha256:<run sha256sum plugin.toml>"
+  }
 }
 ```
 
-3. Your plugin will be reviewed for security (no blocked Lua patterns, reasonable permissions)
-4. Once merged, it appears in the Community tab for all FerrisPad users
+3. Checksums are **required** — FerrisPad verifies downloaded files match the registry
+4. Your plugin will be reviewed for security (no blocked Lua patterns, reasonable permissions)
+5. Once merged, it appears in the Community tab for all FerrisPad users
 
 ## Installation
 

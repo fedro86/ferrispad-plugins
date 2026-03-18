@@ -1413,7 +1413,11 @@ Open a pull request to this repository that adds an entry to `community-plugins.
   "author": "Your Name",
   "license": "MIT",
   "min_ferrispad_version": "0.9.2",
-  "tags": ["relevant", "tags"]
+  "tags": ["relevant", "tags"],
+  "checksums": {
+    "init.lua": "sha256:<run sha256sum init.lua>",
+    "plugin.toml": "sha256:<run sha256sum plugin.toml>"
+  }
 }
 ```
 
@@ -1430,7 +1434,17 @@ Open a pull request to this repository that adds an entry to `community-plugins.
 | `license` | Yes | License identifier (e.g., `MIT`, `Apache-2.0`) |
 | `min_ferrispad_version` | Yes | Minimum FerrisPad version required |
 | `tags` | Yes | Array of search tags |
-| `checksums` | No | SHA-256 checksums for `init.lua` and `plugin.toml` |
+| `checksums` | Yes | SHA-256 checksums for `init.lua` and `plugin.toml` (see below) |
+
+### Generating Checksums
+
+Checksums are required so FerrisPad can verify that the downloaded files match what you published. Generate them with:
+
+```bash
+sha256sum init.lua plugin.toml
+```
+
+Then format each as `"sha256:<hex>"` in the JSON. On macOS use `shasum -a 256` instead.
 
 ### Review Process
 
@@ -1438,13 +1452,14 @@ Community plugins are reviewed for:
 - No blocked Lua patterns (see security scan above)
 - Permissions match actual tool usage
 - `plugin.toml` is well-formed
+- Checksums match the repository files
 - Repository is accessible
 
 Community plugins are **not** signed — they show a "Community" badge in FerrisPad's Plugin Manager.
 
 ### Updating Your Plugin
 
-When you release a new version, open a PR updating the `version` field (and `checksums` if provided) in `community-plugins.json`.
+When you release a new version, open a PR updating the `version` and `checksums` fields in `community-plugins.json`.
 
 ---
 

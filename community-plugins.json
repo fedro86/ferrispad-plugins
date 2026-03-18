@@ -11,7 +11,11 @@
       "author": "Federico Conticello",
       "license": "MIT",
       "min_ferrispad_version": "0.9.2",
-      "tags": ["javascript", "typescript", "eslint", "linting"]
+      "tags": ["javascript", "typescript", "eslint", "linting"],
+      "checksums": {
+        "init.lua": "sha256:d97c36c4088db5da5a1577ff01c546f1447fbd46c18e2102763329909a78c3e6",
+        "plugin.toml": "sha256:5871b493a8f8aacae2d3ac38aafff37a45f118b1c3555be58b6db74dc550ef41"
+      }
     }
   ]
 }
