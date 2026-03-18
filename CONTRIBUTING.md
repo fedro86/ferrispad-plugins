@@ -1407,7 +1407,7 @@ Open a pull request to this repository that adds an entry to `community-plugins.
 {
   "name": "your-plugin-name",
   "repo": "https://github.com/your-user/your-plugin-repo",
-  "branch": "main",
+  "git_ref": "v1.0.0",
   "version": "1.0.0",
   "description": "Short description",
   "author": "Your Name",
@@ -1427,7 +1427,7 @@ Open a pull request to this repository that adds an entry to `community-plugins.
 |-------|----------|-------------|
 | `name` | Yes | Directory name for installation (lowercase, hyphenated) |
 | `repo` | Yes | GitHub repository URL |
-| `branch` | No | Git branch (defaults to `main`) |
+| `git_ref` | Yes | Git tag (e.g., `v1.0.0`) or commit hash — must be immutable |
 | `version` | Yes | Semver version string |
 | `description` | Yes | One-line description |
 | `author` | Yes | Author name |
@@ -1459,7 +1459,11 @@ Community plugins are **not** signed — they show a "Community" badge in Ferris
 
 ### Updating Your Plugin
 
-When you release a new version, open a PR updating the `version` and `checksums` fields in `community-plugins.json`.
+When you release a new version:
+
+1. Tag the new release in your repo (e.g., `git tag v1.1.0 && git push origin v1.1.0`)
+2. Compute new checksums from the tagged files
+3. Open a PR updating `version`, `git_ref`, and `checksums` in `community-plugins.json`
 
 ---
 

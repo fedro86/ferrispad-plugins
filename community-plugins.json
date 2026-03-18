@@ -5,7 +5,7 @@
     {
       "name": "javascript-lint",
       "repo": "https://github.com/fedro86/ferrispad-js-linter",
-      "branch": "master",
+      "git_ref": "v1.0.0",
       "version": "1.0.0",
       "description": "Run ESLint on JavaScript and TypeScript files",
       "author": "Federico Conticello",

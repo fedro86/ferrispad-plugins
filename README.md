@@ -45,7 +45,7 @@ To get your plugin listed in the Community tab:
 {
   "name": "your-plugin-name",
   "repo": "https://github.com/your-user/your-plugin-repo",
-  "branch": "main",
+  "git_ref": "v1.0.0",
   "version": "1.0.0",
   "description": "Short description",
   "author": "Your Name",
