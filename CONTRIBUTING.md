@@ -11,6 +11,8 @@ Thank you for your interest in contributing to FerrisPad's plugin ecosystem!
 - [Hooks](#hooks)
 - [Resource Limits](#resource-limits)
 - [UI Widgets Reference](#ui-widgets-reference)
+- [Terminal View Widget](#terminal-view-widget)
+- [MCP Integration](#mcp-integration)
 - [Linter Plugin Guidelines](#linter-plugin-guidelines)
 - [Diagnostic Format](#diagnostic-format)
 - [Menu Items](#menu-items)
@@ -342,7 +344,7 @@ These methods provide read-only access to the current document state. They are a
 
 | Method | Returns | Description |
 |--------|---------|-------------|
-| `api:git_status(path)` | `table\|nil` | Get git status for a directory (maps relative paths to status codes like `"M"`, `"A"`, `"??"`) |
+| `api:git_status(path)` | `table\|nil` | Get git status for a directory (maps relative paths to status codes: `"M"`, `"A"`, `"??"`, `"!!"` for ignored, etc.) |
 
 ### Utilities
 
@@ -352,6 +354,8 @@ These methods provide read-only access to the current document state. They are a
 | `api:command_exists(cmd)` | `boolean` | Check if a command is available on PATH |
 | `api:run_command(cmd, ...)` | `table` | Run an external command (requires `execute` permission) |
 | `api:diff_text(old, new)` | `table` | Compute aligned diff between two strings (returns `left_content`, `right_content`, `left_highlights`, `right_highlights`) |
+| `api:get_mcp_port()` | `number\|nil` | Get the MCP server TCP port (for external tool integration) |
+| `api:setup_mcp_config(root)` | `bool, string` | Write `.mcp.json` to project root for MCP tool integration (binary path resolved internally). Returns `(true, "")` on success or `(false, error_msg)` on failure. |
 
 ---
 
@@ -373,7 +377,7 @@ Hooks are Lua functions that FerrisPad calls in response to editor events. Defin
 | `on_menu_action` | `on_menu_action(self, api, action, path, content)` | User triggers a menu item |
 | `on_widget_action` | `on_widget_action(self, api, widget_type, action, session_id, data)` | User interacts with a widget |
 
-All hooks receive an `api` object as the first parameter (after `self`) that provides read-only access to document state. Hooks can return a result table with `diagnostics`, `highlights`, `status_message`, `modified_content`, `split_view`, `tree_view`, `open_file`, `clipboard_text`, and/or `goto_line` fields.
+All hooks receive an `api` object as the first parameter (after `self`) that provides read-only access to document state. Hooks can return a result table with `diagnostics`, `highlights`, `status_message`, `modified_content`, `split_view`, `tree_view`, `terminal_view`, `open_file`, `clipboard_text`, and/or `goto_line` fields.
 
 ### on_theme_changed
 
@@ -695,6 +699,15 @@ return {
         click_mode = "double"      -- "single" or "double" (default: "double")
     },
 
+    -- Terminal View → Embedded terminal panel
+    terminal_view = {
+        title = "Terminal",              -- Header title
+        command = "bash",                -- Command to run (nil = default shell)
+        args = {"--login"},              -- CLI arguments
+        working_dir = "/path/to/dir",    -- Working directory (nil = project root)
+        persistent = true                -- Survive tab switches if true
+    },
+
     -- Open File → Request FerrisPad to open a file in the editor
     open_file = "/absolute/path/to/file.rs",
 
@@ -902,7 +915,63 @@ return {
 }
 ```
 
-### 7. Open File
+### 7. Terminal View
+
+**Location**: Bottom panel, embedded terminal emulator
+
+**Purpose**: Run interactive CLI tools (shells, AI assistants, build tools) inside FerrisPad
+
+Terminal views support full VT100/ANSI escape codes, colors, and interactive programs. The terminal runs in a PTY (pseudo-terminal), so tools like `claude`, `python`, `vim`, etc. work correctly.
+
+**Terminal view request fields:**
+
+| Field | Required | Default | Description |
+|-------|----------|---------|-------------|
+| `title` | Yes | — | Header title shown above the terminal |
+| `command` | No | System shell | Command to execute (e.g., `"claude"`, `"python"`) |
+| `args` | No | `[]` | Array of CLI arguments |
+| `working_dir` | No | Project root | Working directory for the command |
+| `persistent` | No | `false` | If `true`, terminal survives tab/document switches |
+
+**Example — Launch Claude Code:**
+
+```lua
+function M:on_menu_action(api, action, path, content)
+    if action == "open_chat" then
+        return {
+            terminal_view = {
+                title = "Claude Code",
+                command = "claude",
+                args = {},
+                working_dir = api:get_project_root(),
+                persistent = true
+            }
+        }
+    end
+end
+```
+
+**Example — Run a build command:**
+
+```lua
+return {
+    terminal_view = {
+        title = "Build Output",
+        command = "cargo",
+        args = {"build", "--release"},
+        working_dir = api:get_project_root(),
+        persistent = false
+    }
+}
+```
+
+**Notes:**
+- Only one terminal view can be active at a time per plugin
+- Persistent terminals keep running when switching tabs; non-persistent ones are destroyed
+- The terminal panel includes a close button in the header
+- Terminal output is rendered with syntax colors (bold, dim, underline, 256-color, etc.)
+
+### 8. Open File
 
 **Purpose**: Request FerrisPad to open a file in the editor
 
@@ -912,7 +981,7 @@ return { open_file = "/absolute/path/to/file.rs" }
 
 **Security**: The path is validated against the project root. Files outside the project root are blocked. Symlinks are resolved before validation.
 
-### 8. Modified Content
+### 9. Modified Content
 
 **Purpose**: Replace the current editor buffer contents (e.g., formatting, auto-fix)
 
@@ -922,7 +991,7 @@ return { modified_content = "new file content" }
 
 Use this from `on_menu_action` or `on_widget_action` (e.g., accepting a split view suggestion).
 
-### 9. Clipboard Text
+### 10. Clipboard Text
 
 **Purpose**: Copy a string to the system clipboard
 
@@ -932,7 +1001,7 @@ return { clipboard_text = "text to copy" }
 
 Use this from `on_widget_action` to copy values from tree nodes, or from any hook that needs to put text on the clipboard. Unlike the `clipboard = true` context menu field (which copies the filesystem path), `clipboard_text` lets you copy arbitrary text.
 
-### 10. Go To Line
+### 11. Go To Line
 
 **Purpose**: Navigate the editor cursor to a specific line number (1-indexed)
 
@@ -956,7 +1025,7 @@ end
 
 **Note**: `api:get_text()` is available in `on_widget_action` — the file content is read automatically from the current document path.
 
-### 11. Returning Values from `on_document_open`
+### 12. Returning Values from `on_document_open`
 
 The `on_document_open` hook can return the same result table as other hooks. This enables auto-displaying widgets when a file is opened:
 
@@ -1003,6 +1072,10 @@ What does the plugin need to show or do?
 │   └── Return `tree_view` with root node
 │       (Collapsible tree panel)
 │
+├── Interactive CLI tool
+│   └── Return `terminal_view` with command
+│       (Embedded terminal panel)
+│
 ├── Open a file
 │   └── Return `open_file` with absolute path
 │       (Opens in editor tab, validated against project root)
@@ -1027,6 +1100,48 @@ What does the plugin need to show or do?
     └── Return empty `diagnostics` and `highlights`
         (Clears panel, no toast needed)
 ```
+
+---
+
+
+## MCP Integration
+
+FerrisPad includes an embedded [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server that allows external AI tools to interact with the editor programmatically.
+
+### Connecting from a Plugin
+
+Plugins can discover the MCP server port to enable external tool integration:
+
+```lua
+local port = api:get_mcp_port()
+if port then
+    -- External tools can connect to 127.0.0.1:{port}
+    -- Use this to pass editor context to CLI tools
+end
+```
+
+### Available MCP Tools
+
+External tools connecting to FerrisPad's MCP server can use these tools:
+
+| Tool | Description |
+|------|-------------|
+| `get_active_file` | Returns path, language, line count, cursor position, modified status |
+| `get_buffer_content` | Returns full text of the active editor buffer |
+| `get_selection` | Returns selected text with start/end positions |
+| `list_open_files` | Returns array of all open files with metadata |
+| `open_file` | Opens a file in the editor |
+| `goto_line` | Moves cursor to a specific line number |
+
+### Bridge Mode
+
+FerrisPad can also run as an MCP bridge (no GUI) for tool integration:
+
+```bash
+FerrisPad --mcp-server
+```
+
+This connects stdin/stdout to the MCP server, enabling integration with tools that support MCP server configuration (e.g., Claude Code's `.mcp.json`).
 
 ---
 
@@ -1317,6 +1432,7 @@ Keyboard shortcut conventions:
 | Go Lint | `Ctrl+Shift+G` |
 | File Explorer | `Ctrl+Shift+E` |
 | YAML/JSON Viewer | `Ctrl+Shift+Y` |
+| Claude Code | `Ctrl+Shift+I` |
 
 ---
 
