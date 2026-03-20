@@ -1,4 +1,4 @@
--- File Explorer Plugin for FerrisPad v0.5.0
+-- File Explorer Plugin for FerrisPad v0.5.1
 -- Uses native cross-platform filesystem API (no shell commands)
 -- Git status indicators: modified (amber), added/untracked (green), conflict (red)
 local M = {
@@ -44,10 +44,12 @@ local STATUS_COLORS = {
     ["UU"] = "conflict",
     ["D"]  = "modified",
     ["R"]  = "modified",
+    ["!!"] = "ignored",
 }
 
 -- Priority for folder status propagation (higher = more important)
 local COLOR_PRIORITY = {
+    ignored = 0,
     untracked = 1,
     added = 2,
     modified = 3,
