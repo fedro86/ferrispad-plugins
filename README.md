@@ -10,7 +10,7 @@ These plugins are hosted in this repository, signed, and verified by FerrisPad.
 |--------|---------|-------------|
 | [python-lint](python-lint/) | 2.7.0 | Python linting with ruff and pyright (venv support, lint-on-save) |
 | [rust-lint](rust-lint/) | 1.5.0 | Rust linting with clippy and cargo build (individual toggles) |
-| [file-explorer](file-explorer/) | 0.5.1 | File explorer tree view with context menus and file management |
+| [file-explorer](file-explorer/) | 0.6.0 | File explorer tree view with context menus and file management |
 | [yaml-json-viewer](yaml-json-viewer/) | 1.0.1 | Tree viewer for YAML and JSON files with search and copy actions |
 | [git-diff](git-diff/) | 1.1.0 | Show git diff in a split view with revert capability |
 
