@@ -1,31 +1,29 @@
--- File Explorer Plugin for FerrisPad v0.5.1
+-- File Explorer Plugin for FerrisPad v0.6.0
 -- Uses native cross-platform filesystem API (no shell commands)
 -- Git status indicators: modified (amber), added/untracked (green), conflict (red)
 local M = {
     name = "file-explorer",
-    version = "0.5.0",
+    version = "0.6.0",
     description = "File explorer tree view for project directories"
 }
 
 -- Whether the tree panel is currently shown (for on_document_lint refresh)
 local tree_shown = false
 
--- Directories to always skip
-local SKIP_DIRS = {
-    [".git"] = true,
-    ["node_modules"] = true,
-    ["target"] = true,
-    ["__pycache__"] = true,
-    [".venv"] = true,
-    ["venv"] = true,
-    [".mypy_cache"] = true,
-    [".pytest_cache"] = true,
-    [".tox"] = true,
-    ["dist"] = true,
-    ["build"] = true,
-    [".eggs"] = true,
-    [".cache"] = true,
-}
+-- Default ignored folders (used when config is not yet available)
+local DEFAULT_IGNORE = ".git,node_modules,target,__pycache__,.venv,venv,.mypy_cache,.pytest_cache,.tox,dist,build,.eggs,.cache"
+
+-- Parse comma-separated ignore patterns into a lookup table
+local function parse_ignore_patterns(csv)
+    local t = {}
+    for entry in (csv or DEFAULT_IGNORE):gmatch("[^,]+") do
+        local trimmed = entry:match("^%s*(.-)%s*$")
+        if trimmed and trimmed ~= "" then
+            t[trimmed] = true
+        end
+    end
+    return t
+end
 
 -- File extensions to skip (compiled/binary artifacts)
 local SKIP_EXTENSIONS = {
@@ -114,6 +112,8 @@ local function scan_project(api)
     end
 
     local include_hidden = show_hidden(api)
+    local ignore_csv = api:get_config("ignore_patterns") or DEFAULT_IGNORE
+    local skip_dirs = parse_ignore_patterns(ignore_csv)
 
     -- Use native scan_dir API (cross-platform, no shell commands)
     local raw_entries = api:scan_dir(project_root, 5)
@@ -127,9 +127,9 @@ local function scan_project(api)
         local dominated_by_skip = false
         local dominated_by_hidden = false
 
-        -- Check each path component for skip dirs and hidden dirs
+        -- Check each path component for ignored dirs and hidden dirs
         for component in entry.rel_path:gmatch("[^/]+") do
-            if SKIP_DIRS[component] then
+            if skip_dirs[component] then
                 dominated_by_skip = true
                 break
             end

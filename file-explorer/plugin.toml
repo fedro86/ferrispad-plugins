@@ -1,5 +1,5 @@
 name = "file-explorer"
-version = "0.5.1"
+version = "0.6.0"
 description = "File explorer tree view for project directories"
 
 [permissions]
@@ -20,6 +20,12 @@ key = "show_hidden_files"
 label = "Show Hidden Files"
 type = "boolean"
 default = "false"
+
+[[config.params]]
+key = "ignore_patterns"
+label = "Ignored Folders (comma-separated)"
+type = "string"
+default = ".git,node_modules,target,__pycache__,.venv,venv,.mypy_cache,.pytest_cache,.tox,dist,build,.eggs,.cache"
 
 [[config.params]]
 key = "position"
