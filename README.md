@@ -21,7 +21,6 @@ Community plugins are hosted in their own repositories and listed in [`community
 | Plugin | Author | Description |
 |--------|--------|-------------|
 | [javascript-lint](https://github.com/fedro86/ferrispad-js-linter) | Federico Conticello | Run ESLint on JavaScript and TypeScript files |
-| [claude-code](https://github.com/fedro86/ferrispad-claude-code-plugin) | Federico Conticello | AI assistant powered by Claude Code CLI with embedded terminal |
 
 ### Three-Tier Trust Model
 
