@@ -3,7 +3,7 @@
     {
       "author": "Federico Conticello",
       "checksums": {
-        "init.lua": "sha256:a487368ef0e9afe37319056ba8218d1f5958e677cb23b7ae78ec5649c4fa24f1",
+        "init.lua": "sha256:01c2818d1db661449ba5fe8ecf69886cf91bae3a052e1ca2f2b30128475f14fe",
         "plugin.toml": "sha256:06a2c351990c2adaeae0c8c83f8e68488bdef850685a04a08990b5f449ac5568"
       },
       "description": "Python linting with ruff and pyright, supports project venv detection, lint-on-save toggle, and configurable tool arguments with dropdown presets",
@@ -12,7 +12,7 @@
       "name": "python-lint",
       "path": "python-lint/",
       "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/python-lint/README.md",
-      "signature": "WiCc/BXwjx9xYLvGQRkzROru199WzClmrO+Fb9T07roXFlrSM3rYJERWZx9BKDtP0YUUSQmYVmNiZMNiVF++Dw==",
+      "signature": "8Gy+JLGlKZ49OYG8aiWgI87fWXwM/wvXcaGexPtKqSz6iunJuYJ6dj7sSxE5HLA+4BY9iMfTuMuAxsQCI8I/DA==",
       "tags": [
         "python",
         "linting",
@@ -104,6 +104,6 @@
       "version": "1.1.0"
     }
   ],
-  "updated": "2026-03-25",
+  "updated": "2026-03-26",
   "version": 1
 }
