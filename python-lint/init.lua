@@ -171,6 +171,21 @@ end
 
 -- Find command in venv or system PATH
 local function find_command(api, cmd_name)
+    -- Check project root venv first (most common for uv/poetry projects)
+    local project_root = api:get_project_root()
+    if project_root then
+        local root_venv_paths = {
+            project_root .. "/.venv/bin/" .. cmd_name,
+            project_root .. "/venv/bin/" .. cmd_name,
+        }
+        for _, p in ipairs(root_venv_paths) do
+            if api:file_exists(p) then
+                api:log("Found " .. cmd_name .. " in project venv: " .. p)
+                return p
+            end
+        end
+    end
+    -- Check file directory and one level up (for sub-project venvs)
     local file_dir = api:get_file_dir()
     if file_dir then
         local venv_paths = {
@@ -236,8 +251,17 @@ local function run_ruff(api, path)
     end
 
     local result = api:run_command(ruff_cmd, table.unpack(args))
-    if result and result.stdout and #result.stdout > 2 then
+    if not result then
+        return {}, true
+    end
+    if result.stdout and #result.stdout > 2 then
         return parse_ruff_output(result.stdout, api), true
+    end
+    -- No stdout: ruff found nothing (exit 0) or crashed (exit non-0)
+    if not result.success and result.stderr and #result.stderr > 0 then
+        local err_line = result.stderr:match("([^\n]+)") or result.stderr
+        api:log("ruff failed: " .. err_line)
+        return {{ line = 1, column = 1, message = "[ruff] " .. err_line, level = "error" }}, true
     end
     return {}, true
 end
@@ -273,8 +297,17 @@ local function run_pyright(api, path)
     end
 
     local result = api:run_command(pyright_cmd, table.unpack(args))
-    if result and result.stdout and #result.stdout > 2 then
+    if not result then
+        return {}, true
+    end
+    if result.stdout and #result.stdout > 2 then
         return parse_pyright_output(result.stdout, api), true
+    end
+    -- No stdout: pyright found nothing (exit 0) or crashed (exit non-0)
+    if not result.success and result.stderr and #result.stderr > 0 then
+        local err_line = result.stderr:match("([^\n]+)") or result.stderr
+        api:log("pyright failed: " .. err_line)
+        return {{ line = 1, column = 1, message = "[pyright] " .. err_line, level = "error" }}, true
     end
     return {}, true
 end
@@ -324,6 +357,14 @@ local function run_all_checks(api, path, content)
             status_message = { level = "warning", text = "[Python Lint] No linters found. Install via: pip install ruff pyright" } }
     end
 
+    -- Warn about individual missing tools
+    local status_msg = nil
+    if ruff_enabled and not ruff_available then
+        status_msg = { level = "warning", text = "[Python Lint] ruff not found. Install via: pip install ruff" }
+    elseif pyright_enabled and not pyright_available then
+        status_msg = { level = "warning", text = "[Python Lint] pyright not found. Install via: pip install pyright" }
+    end
+
     local highlights = {}
     for _, d in ipairs(all_diagnostics) do
         local color = d.level == "error" and "error" or (d.level == "warning" and "warning" or "info")
@@ -333,7 +374,9 @@ local function run_all_checks(api, path, content)
         })
     end
 
-    return { diagnostics = all_diagnostics, highlights = highlights }
+    local result = { diagnostics = all_diagnostics, highlights = highlights }
+    if status_msg then result.status_message = status_msg end
+    return result
 end
 
 -- On save: gate on lint_on_save config
