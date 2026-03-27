@@ -154,6 +154,7 @@ local function scan_project(api)
                 parent = entry.rel_path:match("^(.+)/[^/]+$") or "",
                 name = entry.name,
                 is_dir = entry.is_dir,
+                has_children = entry.has_children,
             })
         end
     end
@@ -197,7 +198,12 @@ local function scan_project(api)
     -- Process all entries
     for _, entry in ipairs(entries) do
         if entry.is_dir then
-            get_or_create_dir(entry.path, entry.name)
+            local dir_node = get_or_create_dir(entry.path, entry.name)
+            -- Mark boundary directories with children as lazy-loadable
+            if entry.has_children and #dir_node.children == 0 then
+                dir_node.lazy = true
+                dir_node._full_path = project_root .. "/" .. entry.path
+            end
         else
             local file_node = {
                 label = entry.name,
@@ -257,6 +263,11 @@ local function scan_project(api)
         -- Walk tree and apply colors; propagate to folders
         apply_git_colors(root_node, git_lookup)
     end
+
+    -- Cache the tree and metadata for lazy expansion
+    M._cached_tree = root_node
+    M._cached_project_root = project_root
+    M._cached_node_map = node_map
 
     return {
         title = project_name,
@@ -489,7 +500,154 @@ function M.on_widget_action(api, widget_type, action, session_id, data)
 
         return refresh_tree(api)
 
+    elseif action == "node_expanded" then
+        -- Lazy-load: scan the expanded directory and graft into cached tree
+        if #node_path == 0 or not M._cached_tree or not M._cached_project_root then
+            return {}
+        end
+
+        local full_path, project_root = reconstruct_path(api, node_path)
+        if not full_path then return {} end
+
+        api:log("Lazy expand: " .. full_path)
+
+        -- Find the node in the cached tree by walking the path
+        local current = M._cached_tree
+        for _, segment in ipairs(node_path) do
+            local found = false
+            if current.children then
+                for _, child in ipairs(current.children) do
+                    if child.label == segment then
+                        current = child
+                        found = true
+                        break
+                    end
+                end
+            end
+            if not found then
+                api:log("Lazy expand: node not found in cache for segment: " .. segment)
+                return {}
+            end
+        end
+
+        -- Scan the expanded directory
+        local include_hidden = show_hidden(api)
+        local ignore_csv = api:get_config("ignore_patterns") or DEFAULT_IGNORE
+        local skip_dirs = parse_ignore_patterns(ignore_csv)
+
+        local raw_entries = api:scan_dir(full_path, 5)
+        if not raw_entries then return {} end
+
+        -- Build children for this node
+        local new_children = {}
+        local sub_node_map = {}
+
+        local function get_or_create_sub(dir_path, dir_name)
+            if sub_node_map[dir_path] then
+                return sub_node_map[dir_path]
+            end
+            local node = {
+                label = dir_name or dir_path:match("([^/]+)$") or dir_path,
+                icon = "folder",
+                children = {},
+            }
+            sub_node_map[dir_path] = node
+
+            local parent_path = dir_path:match("^(.+)/[^/]+$")
+            if parent_path then
+                local parent_name = parent_path:match("([^/]+)$")
+                local parent_node = get_or_create_sub(parent_path, parent_name)
+                table.insert(parent_node.children, node)
+            else
+                table.insert(new_children, node)
+            end
+            return node
+        end
+
+        for _, entry in ipairs(raw_entries) do
+            local dominated = false
+            for component in entry.rel_path:gmatch("[^/]+") do
+                if skip_dirs[component] then dominated = true; break end
+                if not include_hidden and is_hidden(component) then dominated = true; break end
+            end
+            local skip_ext = false
+            if not entry.is_dir then
+                local ext = get_extension(entry.name)
+                if ext and SKIP_EXTENSIONS[ext] then skip_ext = true end
+            end
+
+            if not dominated and not skip_ext then
+                if entry.is_dir then
+                    local dir_node = get_or_create_sub(entry.rel_path, entry.name)
+                    if entry.has_children and #dir_node.children == 0 then
+                        dir_node.lazy = true
+                        dir_node._full_path = full_path .. "/" .. entry.rel_path
+                    end
+                else
+                    local file_node = {
+                        label = entry.name,
+                        icon = "file",
+                        data = full_path .. "/" .. entry.rel_path,
+                    }
+                    local parent_path = entry.rel_path:match("^(.+)/[^/]+$")
+                    if parent_path then
+                        local parent_node = get_or_create_sub(parent_path, nil)
+                        table.insert(parent_node.children, file_node)
+                    else
+                        table.insert(new_children, file_node)
+                    end
+                end
+            end
+        end
+
+        -- Sort children: folders first, then files
+        local function sort_children(children)
+            table.sort(children, function(a, b)
+                local a_is_dir = (a.children ~= nil)
+                local b_is_dir = (b.children ~= nil)
+                if a_is_dir ~= b_is_dir then return a_is_dir end
+                return a.label < b.label
+            end)
+            for _, child in ipairs(children) do
+                if child.children then sort_children(child.children) end
+            end
+        end
+        sort_children(new_children)
+
+        -- Apply git colors to new children
+        local git_statuses = api:git_status(project_root)
+        if git_statuses then
+            local git_lookup = {}
+            for rel_path, status_code in pairs(git_statuses) do
+                local color = STATUS_COLORS[status_code]
+                if color then
+                    git_lookup[project_root .. "/" .. rel_path] = color
+                end
+            end
+            for _, child in ipairs(new_children) do
+                apply_git_colors(child, git_lookup)
+            end
+        end
+
+        -- Graft into cached tree: replace lazy placeholder with real children
+        current.children = new_children
+        current.lazy = false
+
+        -- Return the full updated cached tree
+        local project_name = project_root:match("([^/\\]+)$") or "Project"
+        return {
+            tree_view = {
+                title = project_name,
+                root = M._cached_tree,
+                context_path = project_root,
+                on_click = "open_file",
+                persistent = true,
+                expand_depth = 0,
+            }
+        }
+
     elseif action == "refresh" then
+        M._cached_tree = nil  -- Clear cache on refresh
         return refresh_tree(api)
     end
 
