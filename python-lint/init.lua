@@ -93,8 +93,11 @@ local function parse_ruff_output(json_str, api)
             _, _, col, row = loc_str:find('"column"%s*:%s*(%d+)%s*,%s*"row"%s*:%s*(%d+)')
         end
 
-        -- Extract the message text
-        local _, _, message = json_str:sub(msg_start, msg_start + 300):find('"message"%s*:%s*"([^"]*)"')
+        -- Extract the message text (handles escaped quotes)
+        local _, _, message = json_str:sub(msg_start, msg_start + 300):find('"message"%s*:%s*"(.-[^\\])"')
+        if message then
+            message = message:gsub('\\"', '"')
+        end
 
         api:log("ruff: code=" .. tostring(code) .. " row=" .. tostring(row) .. " col=" .. tostring(col) .. " msg=" .. tostring(message and message:sub(1,40)))
 
@@ -138,8 +141,11 @@ local function parse_pyright_output(json_str, api)
 
         local region = json_str:sub(ss, math.min(#json_str, ss + 500))
 
-        -- Extract message
-        local _, _, message = region:find('"message"%s*:%s*"(.-)"')
+        -- Extract message (handles escaped quotes like \"TemplateView\")
+        local _, _, message = region:find('"message"%s*:%s*"(.-[^\\])"')
+        if message then
+            message = message:gsub('\\"', '"')
+        end
 
         -- Extract range.start - look for "start" followed by "line" then "character"
         local _, _, line, col = region:find('"start"%s*:%s*{%s*"line"%s*:%s*(%d+)%s*,%s*"character"%s*:%s*(%d+)')
