@@ -45,6 +45,22 @@ local STATUS_COLORS = {
     ["!!"] = "ignored",
 }
 
+-- Context menu items shared by initial scan and lazy expand responses
+local CONTEXT_MENU = {
+    { label = "New File...",   action = "new_file",   target = "folder", input = "New file name:" },
+    { label = "New Folder...", action = "new_folder", target = "folder", input = "New folder name:" },
+    { label = "Copy Path",    target = "folder", clipboard = true },
+    { label = "Rename...",    action = "rename",     target = "folder", input = "Rename to:", prefill_name = true },
+    { label = "Delete",       action = "delete",     target = "folder", confirm = "Delete this folder and all contents?" },
+    { label = "Open",         action = "node_clicked", target = "file" },
+    { label = "Copy Path",    target = "file", clipboard = true },
+    { label = "Rename...",    action = "rename",     target = "file", input = "Rename to:", prefill_name = true },
+    { label = "Delete",       action = "delete",     target = "file", confirm = "Delete this file?" },
+    { label = "New File...",   action = "new_file",   target = "empty", input = "New file name:" },
+    { label = "New Folder...", action = "new_folder", target = "empty", input = "New folder name:" },
+    { label = "Refresh",      action = "refresh",    target = "empty" },
+}
+
 -- Priority for folder status propagation (higher = more important)
 local COLOR_PRIORITY = {
     ignored = 0,
@@ -273,23 +289,7 @@ local function scan_project(api)
         title = project_name,
         root = root_node,
         context_path = project_root,
-        context_menu = {
-            -- Folder items
-            { label = "New File...",   action = "new_file",   target = "folder", input = "New file name:" },
-            { label = "New Folder...", action = "new_folder", target = "folder", input = "New folder name:" },
-            { label = "Copy Path",    target = "folder", clipboard = true },
-            { label = "Rename...",    action = "rename",     target = "folder", input = "Rename to:", prefill_name = true },
-            { label = "Delete",       action = "delete",     target = "folder", confirm = "Delete this folder and all contents?" },
-            -- File items
-            { label = "Open",         action = "node_clicked", target = "file" },
-            { label = "Copy Path",    target = "file", clipboard = true },
-            { label = "Rename...",    action = "rename",     target = "file", input = "Rename to:", prefill_name = true },
-            { label = "Delete",       action = "delete",     target = "file", confirm = "Delete this file?" },
-            -- Empty area items
-            { label = "New File...",   action = "new_file",   target = "empty", input = "New file name:" },
-            { label = "New Folder...", action = "new_folder", target = "empty", input = "New folder name:" },
-            { label = "Refresh",      action = "refresh",    target = "empty" },
-        },
+        context_menu = CONTEXT_MENU,
     }, nil
 end
 
@@ -303,8 +303,59 @@ local function reconstruct_path(api, node_path)
     return project_root .. "/" .. table.concat(node_path, "/"), project_root
 end
 
+-- Walk a tree node by label path segments, returning the node or nil.
+local function find_node(root, labels)
+    local current = root
+    for _, label in ipairs(labels) do
+        local found = false
+        if current.children then
+            for _, child in ipairs(current.children) do
+                if child.label == label then
+                    current = child
+                    found = true
+                    break
+                end
+            end
+        end
+        if not found then return nil end
+    end
+    return current
+end
+
+-- After rebuilding the tree (depth 5), graft back any lazily-loaded subtrees
+-- from the old cached tree so deep folders stay visible across refreshes.
+local function restore_lazy_subtrees(new_root, old_root)
+    if not old_root or not new_root then return end
+
+    local function walk(new_node, old_node, path)
+        if not new_node.children or not old_node.children then return end
+        for i, new_child in ipairs(new_node.children) do
+            -- Find matching child in old tree
+            local old_child = nil
+            for _, oc in ipairs(old_node.children) do
+                if oc.label == new_child.label then
+                    old_child = oc
+                    break
+                end
+            end
+            if old_child then
+                if new_child.lazy and not old_child.lazy and old_child.children and #old_child.children > 0 then
+                    -- New tree has this as lazy boundary, but old tree had loaded children — restore them
+                    new_node.children[i] = old_child
+                elseif new_child.children and old_child.children then
+                    -- Recurse into shared subtrees
+                    walk(new_child, old_child, path)
+                end
+            end
+        end
+    end
+
+    walk(new_root, old_root, {})
+end
+
 -- Refresh the tree and return it as a widget result
 local function refresh_tree(api)
+    local old_tree = M._cached_tree
     local tree_data, err = scan_project(api)
     if not tree_data then
         return {
@@ -314,6 +365,11 @@ local function refresh_tree(api)
             }
         }
     end
+    -- Restore lazily-loaded subtrees from the previous cache
+    if old_tree and tree_data.root then
+        restore_lazy_subtrees(tree_data.root, old_tree)
+        M._cached_tree = tree_data.root
+    end
     tree_data.on_click = "open_file"
     tree_data.persistent = true
     return { tree_view = tree_data }
@@ -322,37 +378,58 @@ end
 -- Handle menu actions
 function M.on_menu_action(api, action, path, content)
     if action == "show_explorer" or action == "refresh" then
-        local tree_data, err = scan_project(api)
-
-        if not tree_data then
-            return {
-                status_message = {
-                    level = "warning",
-                    text = "[File Explorer] " .. (err or "Unknown error")
-                }
-            }
-        end
-
-        api:log("File explorer: built tree with title '" .. tree_data.title .. "'")
-
-        -- Add on_click handler so tree node clicks trigger on_widget_action
-        tree_data.on_click = "open_file"
-        tree_data.persistent = true
-
         tree_shown = true
-
-        return {
-            tree_view = tree_data
-        }
+        return refresh_tree(api)
     end
 
     return {}
 end
 
--- Handle document lint results (fires after save — refresh tree with updated git status)
+-- Handle document lint results (fires after save — update git colors only).
+-- Does NOT rebuild the tree, so lazily-loaded deep folders stay open.
 function M.on_document_lint(api, path, content)
-    if not tree_shown then return nil end
-    return refresh_tree(api)
+    if not tree_shown or not M._cached_tree or not M._cached_project_root then
+        return nil
+    end
+
+    local project_root = M._cached_project_root
+
+    -- Re-query git status and re-apply colors to the cached tree
+    local git_statuses = api:git_status(project_root)
+    if git_statuses then
+        -- Reset all colors first
+        local function clear_colors(node)
+            node.label_color = nil
+            if node.children then
+                for _, child in ipairs(node.children) do
+                    clear_colors(child)
+                end
+            end
+        end
+        clear_colors(M._cached_tree)
+
+        local git_lookup = {}
+        for rel_path, status_code in pairs(git_statuses) do
+            local color = STATUS_COLORS[status_code]
+            if color then
+                git_lookup[project_root .. "/" .. rel_path] = color
+            end
+        end
+        apply_git_colors(M._cached_tree, git_lookup)
+    end
+
+    local project_name = project_root:match("([^/\\]+)$") or "Project"
+    return {
+        tree_view = {
+            title = project_name,
+            root = M._cached_tree,
+            context_path = project_root,
+            context_menu = CONTEXT_MENU,
+            on_click = "open_file",
+            persistent = true,
+            expand_depth = 0,
+        }
+    }
 end
 
 -- Handle widget interactions (tree view node clicks and context actions)
@@ -640,6 +717,7 @@ function M.on_widget_action(api, widget_type, action, session_id, data)
                 title = project_name,
                 root = M._cached_tree,
                 context_path = project_root,
+                context_menu = CONTEXT_MENU,
                 on_click = "open_file",
                 persistent = true,
                 expand_depth = 0,
@@ -647,7 +725,6 @@ function M.on_widget_action(api, widget_type, action, session_id, data)
         }
 
     elseif action == "refresh" then
-        M._cached_tree = nil  -- Clear cache on refresh
         return refresh_tree(api)
     end
 
