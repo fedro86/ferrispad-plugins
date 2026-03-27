@@ -4,7 +4,7 @@
       "author": "Federico Conticello",
       "checksums": {
         "init.lua": "sha256:01c2818d1db661449ba5fe8ecf69886cf91bae3a052e1ca2f2b30128475f14fe",
-        "plugin.toml": "sha256:06a2c351990c2adaeae0c8c83f8e68488bdef850685a04a08990b5f449ac5568"
+        "plugin.toml": "sha256:61229efea326b377fdad681639beeaf95c62514cd971b2e1263035b149dabcfc"
       },
       "description": "Python linting with ruff and pyright, supports project venv detection, lint-on-save toggle, and configurable tool arguments with dropdown presets",
       "license": "MIT",
@@ -12,14 +12,14 @@
       "name": "python-lint",
       "path": "python-lint/",
       "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/python-lint/README.md",
-      "signature": "8Gy+JLGlKZ49OYG8aiWgI87fWXwM/wvXcaGexPtKqSz6iunJuYJ6dj7sSxE5HLA+4BY9iMfTuMuAxsQCI8I/DA==",
+      "signature": "K6Fheq11Zs67AdZBdGLnKJ8y/f3p0yJLIGQSKV5t4EBepSZn0z9cl/INFRAnvFLbPmyLEtmSqAcXveRzKY/9Cw==",
       "tags": [
         "python",
         "linting",
         "ruff",
         "pyright"
       ],
-      "version": "2.7.0"
+      "version": "2.8.0"
     },
     {
       "author": "Federico Conticello",
@@ -45,8 +45,8 @@
     {
       "author": "Federico Conticello",
       "checksums": {
-        "init.lua": "sha256:89c9a6ca285a618368c278d1b4be9e1f5b42a80d0a116ceac422bfde2fe7a251",
-        "plugin.toml": "sha256:3ff320de5ec6bc1220e9c45308df151fc81dad14f9795e202604ac51c1417bcf"
+        "init.lua": "sha256:999e4faf671d5ddbe6ba308f3cbe3df64b15920e180ba8f2ec22541572218ee7",
+        "plugin.toml": "sha256:45a008c7999038315330d36b675f8d86bb86eba75bc5fb98d5299cbf3b84b956"
       },
       "description": "Cross-platform file explorer tree view with native filesystem API, context menus, file management (create/rename/delete), configurable position, hidden files toggle, and smart directory filtering",
       "license": "MIT",
@@ -54,13 +54,13 @@
       "name": "file-explorer",
       "path": "file-explorer/",
       "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/file-explorer/README.md",
-      "signature": "Jz8CA9dNhfEjPcX216iUqy0eczkxfFyBxViiYWYH9KYhMW9LS4up1ljpiaoO6yEZDGL2DNlGcNaKq3WSwLj5AQ==",
+      "signature": "qRi3LKh786zFHMkGf/OoVV4VKOsSk6f2phcEtlmXCQ9lvZwzjFwVRWe5+il/+B18heDY2gPfoIeQff43Vxn9AQ==",
       "tags": [
         "file-explorer",
         "tree-view",
         "navigation"
       ],
-      "version": "0.6.0"
+      "version": "0.7.0"
     },
     {
       "author": "Federico Conticello",
@@ -104,6 +104,6 @@
       "version": "1.1.0"
     }
   ],
-  "updated": "2026-03-26",
+  "updated": "2026-03-27",
   "version": 1
 }
