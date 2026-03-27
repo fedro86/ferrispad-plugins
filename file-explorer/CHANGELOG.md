@@ -5,6 +5,18 @@ All notable changes to the File Explorer plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-03-27
+
+### Added
+- **Lazy-loading tree expansion**: Directories beyond depth 5 are loaded on demand when expanded, enabling navigation of arbitrarily deep project structures
+- Tree cache for efficient lazy expansion (cleared on refresh)
+- Git status colors applied to lazily-loaded subtrees
+
+## [0.6.0] - 2026-03-25
+
+### Added
+- **Configurable ignore patterns**: Ignored folders are now configurable via plugin settings (previously hardcoded)
+
 ## [0.5.1] - 2026-03-20
 
 ### Added

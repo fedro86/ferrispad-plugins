@@ -5,6 +5,15 @@ All notable changes to the Python Lint plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.0] - 2026-03-27
+
+### Fixed
+- **Silent tool failures**: ruff/pyright now report errors via diagnostics when they crash or receive invalid arguments (previously returned "0 errors" silently)
+- **Project venv discovery**: `find_command` now checks project root venv first, fixing tool discovery for deeply nested files in uv/poetry projects
+
+### Added
+- Per-tool "not found" toast warning when one linter is enabled but not installed
+
 ## [2.7.0] - 2026-03-04
 
 ### Added
