@@ -5,6 +5,12 @@ All notable changes to the File Explorer plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2026-03-30
+
+### Fixed
+- **Stale lazy-loaded subtrees on refresh**: Deleting or creating files in deep folders (beyond depth 5) now correctly updates the tree instead of showing stale cached data
+- Extracted shared `scan_and_build_children` helper to eliminate duplicated scan logic
+
 ## [0.7.0] - 2026-03-27
 
 ### Added
