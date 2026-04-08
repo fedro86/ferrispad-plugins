@@ -114,5 +114,5 @@ These file types are excluded:
 
 ## Version
 
-- Plugin version: 0.7.1
+- Plugin version: 0.7.2
 - Requires FerrisPad 0.9.1+

@@ -1,9 +1,9 @@
--- File Explorer Plugin for FerrisPad v0.7.1
+-- File Explorer Plugin for FerrisPad v0.7.2
 -- Uses native cross-platform filesystem API (no shell commands)
 -- Git status indicators: modified (amber), added/untracked (green), conflict (red)
 local M = {
     name = "file-explorer",
-    version = "0.7.1",
+    version = "0.7.2",
     description = "File explorer tree view for project directories"
 }
 
@@ -13,16 +13,20 @@ local tree_shown = false
 -- Default ignored folders (used when config is not yet available)
 local DEFAULT_IGNORE = ".git,node_modules,target,__pycache__,.venv,venv,.mypy_cache,.pytest_cache,.tox,dist,build,.eggs,.cache"
 
--- Parse comma-separated ignore patterns into a lookup table
+-- Parse comma-separated ignore patterns into a lookup table and a sequence list.
+-- The lookup table is used for Lua-side filtering (hidden files etc.).
+-- The sequence list is passed to scan_dir so Rust skips these dirs during the walk.
 local function parse_ignore_patterns(csv)
-    local t = {}
+    local lookup = {}
+    local list = {}
     for entry in (csv or DEFAULT_IGNORE):gmatch("[^,]+") do
         local trimmed = entry:match("^%s*(.-)%s*$")
         if trimmed and trimmed ~= "" then
-            t[trimmed] = true
+            lookup[trimmed] = true
+            list[#list + 1] = trimmed
         end
     end
-    return t
+    return lookup, list
 end
 
 -- File extensions to skip (compiled/binary artifacts)
@@ -129,42 +133,38 @@ local function scan_project(api)
 
     local include_hidden = show_hidden(api)
     local ignore_csv = api:get_config("ignore_patterns") or DEFAULT_IGNORE
-    local skip_dirs = parse_ignore_patterns(ignore_csv)
+    local skip_dirs, skip_dirs_list = parse_ignore_patterns(ignore_csv)
 
-    -- Use native scan_dir API (cross-platform, no shell commands)
-    local raw_entries = api:scan_dir(project_root, 5)
+    -- Use native scan_dir API with skip_dirs for Rust-side filtering
+    local raw_entries = api:scan_dir(project_root, 5, skip_dirs_list)
     if not raw_entries then
         return nil, "Failed to scan project directory"
     end
 
-    -- Filter entries
+    -- Filter remaining entries (hidden files, binary extensions)
     local entries = {}
     for _, entry in ipairs(raw_entries) do
-        local dominated_by_skip = false
-        local dominated_by_hidden = false
+        local skip = false
 
-        -- Check each path component for ignored dirs and hidden dirs
-        for component in entry.rel_path:gmatch("[^/]+") do
-            if skip_dirs[component] then
-                dominated_by_skip = true
-                break
-            end
-            if not include_hidden and is_hidden(component) then
-                dominated_by_hidden = true
-                break
+        -- Check for hidden path components
+        if not include_hidden then
+            for component in entry.rel_path:gmatch("[^/]+") do
+                if is_hidden(component) then
+                    skip = true
+                    break
+                end
             end
         end
 
         -- Skip binary artifact extensions for files
-        local skip_ext = false
-        if not entry.is_dir then
+        if not skip and not entry.is_dir then
             local ext = get_extension(entry.name)
             if ext and SKIP_EXTENSIONS[ext] then
-                skip_ext = true
+                skip = true
             end
         end
 
-        if not dominated_by_skip and not dominated_by_hidden and not skip_ext then
+        if not skip then
             table.insert(entries, {
                 path = entry.rel_path,
                 parent = entry.rel_path:match("^(.+)/[^/]+$") or "",
@@ -327,9 +327,9 @@ end
 local function scan_and_build_children(api, full_path, project_root)
     local include_hidden = show_hidden(api)
     local ignore_csv = api:get_config("ignore_patterns") or DEFAULT_IGNORE
-    local skip_dirs = parse_ignore_patterns(ignore_csv)
+    local skip_dirs, skip_dirs_list = parse_ignore_patterns(ignore_csv)
 
-    local raw_entries = api:scan_dir(full_path, 5)
+    local raw_entries = api:scan_dir(full_path, 5, skip_dirs_list)
     if not raw_entries then return nil end
 
     local new_children = {}
@@ -357,17 +357,17 @@ local function scan_and_build_children(api, full_path, project_root)
     end
 
     for _, entry in ipairs(raw_entries) do
-        local dominated = false
-        for component in entry.rel_path:gmatch("[^/]+") do
-            if skip_dirs[component] then dominated = true; break end
-            if not include_hidden and is_hidden(component) then dominated = true; break end
+        local skip = false
+        if not include_hidden then
+            for component in entry.rel_path:gmatch("[^/]+") do
+                if is_hidden(component) then skip = true; break end
+            end
         end
-        local skip_ext = false
-        if not entry.is_dir then
+        if not skip and not entry.is_dir then
             local ext = get_extension(entry.name)
-            if ext and SKIP_EXTENSIONS[ext] then skip_ext = true end
+            if ext and SKIP_EXTENSIONS[ext] then skip = true end
         end
-        if not dominated and not skip_ext then
+        if not skip then
             if entry.is_dir then
                 local dir_node = get_or_create_sub(entry.rel_path, entry.name)
                 if entry.has_children and #dir_node.children == 0 then
