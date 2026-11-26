@@ -1,5 +1,5 @@
 name = "Rust Lint"
-version = "1.5.0"
+version = "1.5.1"
 description = "Run clippy and cargo build on Rust files"
 
 [permissions]
@@ -8,7 +8,6 @@ execute = ["cargo"]
 [[menu_items]]
 label = "Run All Checks"
 action = "lint"
-shortcut = "Ctrl+Shift+R"
 
 [[menu_items]]
 label = "Run Clippy Only"
