@@ -40,7 +40,9 @@ Save any `.rs` file in a project with `Cargo.toml` - diagnostics appear automati
 
 ### Menu Actions
 
-- **Plugins > Rust Lint > Run All Checks** (Ctrl+Shift+R): Run all enabled tools
+- **Plugins > Rust Lint > Run All Checks**: Run all enabled tools. It has no
+  shortcut of its own: Ctrl+Shift+L (**Plugins > General > Run All Checks**)
+  runs the same checks, or assign a key in **Edit > Key Shortcuts**
 - **Plugins > Rust Lint > Run Clippy Only**: Run clippy regardless of config
 - **Plugins > Rust Lint > Run Build Only**: Run cargo build regardless of config
 - **Plugins > Rust Lint > Settings...**: Configure plugin options
