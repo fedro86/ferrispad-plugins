@@ -25,7 +25,7 @@
       "author": "Federico Conticello",
       "checksums": {
         "init.lua": "sha256:0ce63e3ee8ad217fbba065ba8e43a89be40e8bd608198502105872ddb9545810",
-        "plugin.toml": "sha256:5002148250967d2e24b50f45a0614a39bc4913146e03b81b99770e4c35a65f31"
+        "plugin.toml": "sha256:34eb9ddfc16400bdbff83a36502e96ed70fd0511b15d9d7b9297d47e24e68866"
       },
       "description": "Rust linting with clippy and cargo build, individual toggles for each tool, lint-on-save toggle, and configurable arguments with dropdown presets",
       "license": "MIT",
@@ -33,14 +33,14 @@
       "name": "rust-lint",
       "path": "rust-lint/",
       "readme_url": "https://github.com/fedro86/ferrispad-plugins/blob/main/rust-lint/README.md",
-      "signature": "oY582w2Ur0I3NvzsZ+Ep9qMLM/exlmNGZx6VtZRSJq5eNO7h6bhFPOefsMn89Il3z2QkhloXSz97ZR52hp03Bw==",
+      "signature": "Qw6sxwhWxmCt1touleEBFxbo0ta14kRQZWAKdh42/4R1SwC8xD42Dq22aXyhvtfMVU1OEofdXAgrADkh7695Bg==",
       "tags": [
         "rust",
         "linting",
         "clippy",
         "cargo"
       ],
-      "version": "1.5.0"
+      "version": "1.5.1"
     },
     {
       "author": "Federico Conticello",
@@ -104,6 +104,6 @@
       "version": "1.1.0"
     }
   ],
-  "updated": "2026-04-08",
+  "updated": "2026-11-27",
   "version": 1
 }
